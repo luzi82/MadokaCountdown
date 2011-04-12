@@ -44,10 +44,13 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 		diff /= 24;
 		int day = diff;
 
-		String s = String.format("%d日 %02d:%02d:%02d", day, hr, min, sec);
+		String s = String.format("%02d:%02d:%02d", hr, min, sec);
 
 		RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.appwidget);
-		views.setTextViewText(R.id.title, s);
+		views.setTextViewText(R.id.day, Integer.toString(day));
+		// views.setTextViewText(R.id.day2, Integer.toString(day));
+		views.setTextViewText(R.id.time, s);
+		// views.setTextViewText(R.id.time2, s);
 
 		appWidgetManager.updateAppWidget(appWidgetIds, views);
 	}
