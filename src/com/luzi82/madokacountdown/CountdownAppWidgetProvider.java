@@ -4,10 +4,12 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.widget.RemoteViews;
 
 public class CountdownAppWidgetProvider extends AppWidgetProvider {
@@ -18,6 +20,8 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 		deadline.set(2011, Calendar.APRIL, 22, 2, 40);
 		mDeadline = deadline.getTime().getTime();
 	}
+
+	static Intent link = new Intent(Intent.ACTION_VIEW, Uri.parse("http://mobile.twitter.com/madoka_magica"));
 
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -51,6 +55,9 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 		// views.setTextViewText(R.id.day2, Integer.toString(day));
 		views.setTextViewText(R.id.time, s);
 		// views.setTextViewText(R.id.time2, s);
+
+		PendingIntent pi = PendingIntent.getActivity(context, 0, link, 0);
+		views.setOnClickPendingIntent(R.id.link, pi);
 
 		appWidgetManager.updateAppWidget(appWidgetIds, views);
 	}
