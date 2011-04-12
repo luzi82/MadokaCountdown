@@ -1,6 +1,7 @@
 package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
+import java.util.GregorianCalendar;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -13,11 +14,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import android.util.Log;
 
 public class MainService extends Service {
 
 	public static String UPDATE = "MadokaCountdown.UPDATE";
+
+	// that is no good when install in off state
+	// but the screen detection is in LEVEL 7
+	boolean mScreenOn = true;
 
 	private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
 		@Override
@@ -27,21 +31,31 @@ public class MainService extends Service {
 
 			if (category != null) {
 				for (String cat : category) {
-					Log.d("CountdownAppWidgetProvider", "cat " + cat);
+					MadokaCountdown.logd("cat " + cat);
 				}
 			}
-			Log.d("CountdownAppWidgetProvider", "action " + action);
-			Log.d("CountdownAppWidgetProvider", "");
+			MadokaCountdown.logd("action " + action);
+			MadokaCountdown.logd("");
 
-			if (action.equals(UPDATE)) {
-				startTimer();
-			} else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
-				stopTimer();
-			} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
-				startTimer();
+			synchronized (MainService.this) {
+				if (action.equals(UPDATE)) {
+				} else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+					mScreenOn = false;
+				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
+					mScreenOn = true;
+				}
+				updateTimer();
 			}
 		}
 	};
+
+	synchronized void updateTimer() {
+		if (getWidgetExist() && mScreenOn) {
+			startTimer();
+		} else {
+			stopTimer();
+		}
+	}
 
 	synchronized void startTimer() {
 		if (t == null) {
@@ -50,26 +64,43 @@ public class MainService extends Service {
 			TimerTask tt = new TimerTask() {
 				@Override
 				public void run() {
-					Log.d("CountdownAppWidgetProvider", "MainService.run");
+					MadokaCountdown.logd("MainService.run");
 					AppWidgetManager awm = AppWidgetManager.getInstance(MainService.this);
 					int[] ids = awm.getAppWidgetIds(new ComponentName(MainService.this, CountdownAppWidgetProvider.class));
 					if ((ids != null) && (ids.length > 0)) {
-						CountdownAppWidgetProvider.doUpdate(MainService.this, awm, ids);
+						long time = scheduledExecutionTime();
+						MadokaCountdown.logd("time " + time);
+						CountdownAppWidgetProvider.doUpdate(MainService.this, awm, ids, time);
 					} else {
-						stopTimer();
+						updateTimer();
 					}
 				}
 			};
-			t.scheduleAtFixedRate(tt, 0, 1000);
+
+			GregorianCalendar gc = new GregorianCalendar();
+			gc.set(GregorianCalendar.SECOND, gc.get(GregorianCalendar.SECOND) + 1);
+			gc.set(GregorianCalendar.MILLISECOND, 0);
+
+			t.scheduleAtFixedRate(tt, gc.getTime(), 1000);
 		}
 	}
 
 	synchronized void stopTimer() {
-		t.cancel();
-		t = null;
+		if (t != null) {
+			t.cancel();
+			t = null;
+		}
 	}
 
 	Timer t;
+
+	boolean getWidgetExist() {
+		AppWidgetManager awm = AppWidgetManager.getInstance(this);
+		int[] ids = awm.getAppWidgetIds(new ComponentName(this, CountdownAppWidgetProvider.class));
+		return (ids != null) && ids.length > 0;
+	}
+
+	// /////////////////////////////////////
 
 	@Override
 	public void onCreate() {
@@ -82,7 +113,7 @@ public class MainService extends Service {
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
 		registerReceiver(mIntentReceiver, commandFilter);
 
-		startTimer();
+		updateTimer();
 	}
 
 	static class ServiceStub extends IMainService.Stub {
