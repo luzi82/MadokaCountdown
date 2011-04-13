@@ -6,7 +6,7 @@ public class MadokaCountdown {
 
 	public static String TAG = "MadokaCountdown";
 
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 
 	static void logd(String msg) {
 		if (!DEBUG) {
