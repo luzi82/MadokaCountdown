@@ -2,7 +2,6 @@ package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
 import java.util.GregorianCalendar;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -23,23 +22,24 @@ public class MainService extends Service {
 	// but the screen detection is in LEVEL 7
 	boolean mScreenOn = true;
 
+	ScreenDetect mScreenDetect;
+
 	private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			Set<String> category = intent.getCategories();
+			// Set<String> category = intent.getCategories();
 			String action = intent.getAction();
 
-			if (category != null) {
-				for (String cat : category) {
-					MadokaCountdown.logd("cat " + cat);
-				}
-			}
-			MadokaCountdown.logd("action " + action);
-			MadokaCountdown.logd("");
+			// if (category != null) {
+			// for (String cat : category) {
+			// MadokaCountdown.logd("cat " + cat);
+			// }
+			// }
+			// MadokaCountdown.logd("action " + action);
+			// MadokaCountdown.logd("");
 
 			synchronized (MainService.this) {
-				if (action.equals(UPDATE)) {
-				} else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+				if (action.equals(Intent.ACTION_SCREEN_OFF)) {
 					mScreenOn = false;
 				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
 					mScreenOn = true;
@@ -50,6 +50,14 @@ public class MainService extends Service {
 	};
 
 	synchronized void updateTimer() {
+		switch (mScreenDetect.getScreenState()) {
+		case 1:
+			mScreenOn = true;
+			break;
+		case -1:
+			mScreenOn = false;
+			break;
+		}
 		if (getWidgetExist() && mScreenOn) {
 			startTimer();
 		} else {
@@ -71,9 +79,8 @@ public class MainService extends Service {
 						long time = scheduledExecutionTime();
 						MadokaCountdown.logd("time " + time);
 						CountdownAppWidgetProvider.doUpdate(MainService.this, awm, ids, time);
-					} else {
-						updateTimer();
 					}
+					updateTimer();
 				}
 			};
 
@@ -105,6 +112,8 @@ public class MainService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
+		mScreenDetect = new ScreenDetect(this);
 
 		IntentFilter commandFilter = new IntentFilter();
 		commandFilter.addAction(UPDATE);
