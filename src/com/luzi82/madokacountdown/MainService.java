@@ -27,16 +27,7 @@ public class MainService extends Service {
 	private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			// Set<String> category = intent.getCategories();
 			String action = intent.getAction();
-
-			// if (category != null) {
-			// for (String cat : category) {
-			// MadokaCountdown.logd("cat " + cat);
-			// }
-			// }
-			// MadokaCountdown.logd("action " + action);
-			// MadokaCountdown.logd("");
 
 			synchronized (MainService.this) {
 				if (action.equals(Intent.ACTION_SCREEN_OFF)) {
@@ -44,12 +35,12 @@ public class MainService extends Service {
 				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
 					mScreenOn = true;
 				}
-				updateTimer();
+				updateTimer(System.currentTimeMillis());
 			}
 		}
 	};
 
-	synchronized void updateTimer() {
+	synchronized void updateTimer(long now) {
 		switch (mScreenDetect.getScreenState()) {
 		case 1:
 			mScreenOn = true;
@@ -58,8 +49,21 @@ public class MainService extends Service {
 			mScreenOn = false;
 			break;
 		}
-		if (getWidgetExist() && mScreenOn) {
+		boolean timeGood = now < CountdownAppWidgetProvider.mBoardcastEnd;
+		boolean widgetExist = getWidgetExist();
+		if (widgetExist && mScreenOn && timeGood) {
 			startTimer();
+		} else if (widgetExist && mScreenOn) {
+			stopTimer();
+
+			Timer t2 = new Timer();
+			t2.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					long time = scheduledExecutionTime();
+					redraw(time);
+				}
+			}, 0);
 		} else {
 			stopTimer();
 		}
@@ -72,15 +76,9 @@ public class MainService extends Service {
 			TimerTask tt = new TimerTask() {
 				@Override
 				public void run() {
-					MadokaCountdown.logd("MainService.run");
-					AppWidgetManager awm = AppWidgetManager.getInstance(MainService.this);
-					int[] ids = awm.getAppWidgetIds(new ComponentName(MainService.this, CountdownAppWidgetProvider.class));
-					if ((ids != null) && (ids.length > 0)) {
-						long time = scheduledExecutionTime();
-						MadokaCountdown.logd("time " + time);
-						CountdownAppWidgetProvider.doUpdate(MainService.this, awm, ids, time);
-					}
-					updateTimer();
+					long time = scheduledExecutionTime();
+					redraw(time);
+					updateTimer(time);
 				}
 			};
 
@@ -96,6 +94,16 @@ public class MainService extends Service {
 		if (t != null) {
 			t.cancel();
 			t = null;
+		}
+	}
+
+	synchronized void redraw(long time) {
+		MadokaCountdown.logd("MainService.run");
+		AppWidgetManager awm = AppWidgetManager.getInstance(MainService.this);
+		int[] ids = awm.getAppWidgetIds(new ComponentName(MainService.this, CountdownAppWidgetProvider.class));
+		if ((ids != null) && (ids.length > 0)) {
+			MadokaCountdown.logd("time " + time);
+			CountdownAppWidgetProvider.doUpdate(MainService.this, awm, ids, time);
 		}
 	}
 
@@ -122,7 +130,7 @@ public class MainService extends Service {
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
 		registerReceiver(mIntentReceiver, commandFilter);
 
-		updateTimer();
+		updateTimer(System.currentTimeMillis());
 	}
 
 	static class ServiceStub extends IMainService.Stub {
