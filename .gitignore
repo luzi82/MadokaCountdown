@@ -5,3 +5,4 @@ default.properties
 bin/
 gen/
 MadokaCountdown.apk
+uninstall.sh
