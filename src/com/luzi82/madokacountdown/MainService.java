@@ -123,14 +123,18 @@ public class MainService extends Service {
 
 		mScreenDetect = new ScreenDetect(this);
 
+		initIntentFilter();
+
+		updateTimer(System.currentTimeMillis());
+	}
+
+	private void initIntentFilter() {
 		IntentFilter commandFilter = new IntentFilter();
 		commandFilter.addAction(UPDATE);
 		commandFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		commandFilter.addAction(Intent.ACTION_SCREEN_ON);
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
 		registerReceiver(mIntentReceiver, commandFilter);
-
-		updateTimer(System.currentTimeMillis());
 	}
 
 	static class ServiceStub extends IMainService.Stub {
