@@ -9,7 +9,6 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -28,7 +27,8 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 		mBoardcastEnd = deadline.getTime().getTime();
 	}
 
-	static Intent link = new Intent(Intent.ACTION_VIEW, Uri.parse("http://mobile.twitter.com/madoka_magica"));
+	// static Intent link = new Intent(Intent.ACTION_VIEW,
+	// Uri.parse("http://mobile.twitter.com/madoka_magica"));
 
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -88,7 +88,11 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 			views.setTextViewText(R.id.time, s);
 		}
 		if (views != null) {
-			PendingIntent pi = PendingIntent.getActivity(context, 0, link, 0);
+			Intent intent = new Intent(context, MainMenuActivity.class);
+			PendingIntent pi = PendingIntent.getActivity(context, 0, intent, 0);
+
+			// PendingIntent pi = PendingIntent.getActivity(context, 0, link,
+			// 0);
 			views.setOnClickPendingIntent(R.id.link, pi);
 
 			appWidgetManager.updateAppWidget(appWidgetIds, views);
