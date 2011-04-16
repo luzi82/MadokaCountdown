@@ -14,8 +14,8 @@ import android.os.Bundle;
 
 public class MainMenuActivity extends Activity {
 
-	static Intent OFFICAL_LINK = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.madoka-magica.com/"));
-	static Intent TWITTER_LINK = new Intent(Intent.ACTION_VIEW, Uri.parse("http://mobile.twitter.com/madoka_magica"));
+	static final Intent OFFICAL_LINK = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.madoka-magica.com/"));
+	static final Intent TWITTER_LINK = new Intent(Intent.ACTION_VIEW, Uri.parse("http://mobile.twitter.com/madoka_magica"));
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +44,7 @@ public class MainMenuActivity extends Activity {
 					startActivity(TWITTER_LINK);
 					break;
 				case 2:
+					startActivity(new Intent(MainMenuActivity.this, SettingActivity.class));
 					break;
 				}
 				MainMenuActivity.this.finish();
