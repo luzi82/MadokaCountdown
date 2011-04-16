@@ -5,6 +5,8 @@ import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
@@ -70,6 +72,7 @@ public class MainService extends Service {
 	}
 
 	synchronized void startTimer() {
+		startAlarm(this);
 		if (t == null) {
 			t = new Timer();
 
@@ -91,6 +94,7 @@ public class MainService extends Service {
 	}
 
 	synchronized void stopTimer() {
+		endAlarm(this);
 		if (t != null) {
 			t.cancel();
 			t = null;
@@ -150,6 +154,22 @@ public class MainService extends Service {
 	@Override
 	public IBinder onBind(Intent intent) {
 		return mBinder;
+	}
+
+	public static void startAlarm(Context context) {
+		endAlarm(context);
+		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+		alarmManager.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, getAlarmPendingIntent(context));
+	}
+
+	public static void endAlarm(Context context) {
+		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+		alarmManager.cancel(getAlarmPendingIntent(context));
+	}
+
+	private static PendingIntent getAlarmPendingIntent(Context context) {
+		Intent intent = new Intent(context, MainService.class);
+		return PendingIntent.getService(context, 0, intent, 0);
 	}
 
 }
