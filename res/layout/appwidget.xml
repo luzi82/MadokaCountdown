@@ -37,7 +37,8 @@
 				android:layout_height="fill_parent" android:textColor="#f1838a"
 				android:shadowColor="#bf000000" android:shadowDx="0"
 				android:shadowDy="1" android:shadowRadius="1" android:textSize="16sp"
-				android:singleLine="true" android:text="日" android:gravity="bottom|right" />
+				android:singleLine="true" android:text="日" android:gravity="bottom|right"
+				android:visibility="gone" />
 			<TextView android:id="@+id/time" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:textColor="#f1838a"
 				android:shadowColor="#bf000000" android:shadowDx="0"

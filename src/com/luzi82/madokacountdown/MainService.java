@@ -1,7 +1,9 @@
 package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
+import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -15,6 +17,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.view.View;
+import android.widget.RemoteViews;
 
 public class MainService extends Service {
 
@@ -51,7 +55,7 @@ public class MainService extends Service {
 			mScreenOn = false;
 			break;
 		}
-		boolean timeGood = now < CountdownAppWidgetProvider.mBoardcastEnd;
+		boolean timeGood = now < mBoardcastEnd;
 		boolean widgetExist = getWidgetExist();
 		if (widgetExist && mScreenOn && timeGood) {
 			startTimer();
@@ -107,7 +111,7 @@ public class MainService extends Service {
 		int[] ids = awm.getAppWidgetIds(new ComponentName(MainService.this, CountdownAppWidgetProvider.class));
 		if ((ids != null) && (ids.length > 0)) {
 			MadokaCountdown.logd("time " + time);
-			CountdownAppWidgetProvider.doUpdate(MainService.this, awm, ids, time);
+			doUpdate(MainService.this, awm, ids, time);
 		}
 	}
 
@@ -172,4 +176,75 @@ public class MainService extends Service {
 		return PendingIntent.getService(context, 0, intent, 0);
 	}
 
+	// //////////////////////////////////////
+
+	static long mBoardcastStart;
+	static long mBoardcastEnd;
+	static {
+		GregorianCalendar deadline = new GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
+		deadline.set(2011, Calendar.APRIL, 22, 2, 40, 0);
+		deadline.set(Calendar.MILLISECOND, 0);
+		mBoardcastStart = deadline.getTime().getTime();
+		deadline = new GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
+		deadline.set(2011, Calendar.APRIL, 22, 3, 40, 0);
+		deadline.set(Calendar.MILLISECOND, 0);
+		mBoardcastEnd = deadline.getTime().getTime();
+	}
+
+	private static void doUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
+		RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.appwidget);
+		int diff = (int) (mBoardcastStart - (now + 500));
+		if (diff > 0) {
+			diff /= 1000;
+
+			int sec = diff % 60;
+			diff /= 60;
+			int min = diff % 60;
+			diff /= 60;
+			int hr = diff % 24;
+			diff /= 24;
+			int day = diff;
+
+			if (day > 0) {
+				views.setTextViewText(R.id.day, Integer.toString(day));
+				views.setViewVisibility(R.id.daytxt, View.VISIBLE);
+				String s = String.format("%02d:%02d:%02d", hr, min, sec);
+				views.setTextViewText(R.id.time, s);
+			} else {
+				views.setViewVisibility(R.id.day, View.GONE);
+				views.setViewVisibility(R.id.daytxt, View.GONE);
+				String s;
+				if (hr > 0) {
+					s = String.format("%d:%02d:%02d", hr, min, sec);
+				} else if (min > 0) {
+					s = String.format("%d:%02d", min, sec);
+				} else {
+					s = String.format("%d", sec);
+				}
+				views.setTextViewText(R.id.time, s);
+			}
+
+		} else {
+			views.setViewVisibility(R.id.day, View.GONE);
+			views.setViewVisibility(R.id.daytxt, View.GONE);
+			diff = (int) (mBoardcastEnd - (now + 500));
+			String s;
+			if (diff > 0) {
+				s = "放送中";
+			} else {
+				s = "放送終了";
+			}
+			views.setTextViewText(R.id.time, s);
+		}
+		if (views != null) {
+			Intent intent = new Intent(context, MainMenuActivity.class);
+			PendingIntent pi = PendingIntent.getActivity(context, 0, intent, 0);
+
+			// PendingIntent pi = PendingIntent.getActivity(context, 0, link,
+			// 0);
+			views.setOnClickPendingIntent(R.id.link, pi);
+
+			appWidgetManager.updateAppWidget(appWidgetIds, views);
+		}
+	}
 }
