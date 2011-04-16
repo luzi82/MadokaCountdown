@@ -18,8 +18,14 @@ public class SettingActivity extends PreferenceActivity {
 		getPreferenceManager().setSharedPreferencesName(PREFERENCE_NAME);
 		initValue(getPreferenceManager().getSharedPreferences());
 		addPreferencesFromResource(R.xml.preferences);
-		// getPreferenceManager().getSharedPreferences()
-		// .registerOnSharedPreferenceChangeListener(this);
+		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
+			@Override
+			public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+				if (key.equals(MadokaCountdown.PREFERENCES_DEADLINE)) {
+					updateDeadlinePreferenceSummary(null);
+				}
+			}
+		});
 
 		// PREFERENCES_DEADLINE value
 		ListPreference deadlinePreference = (ListPreference) findPreference(MadokaCountdown.PREFERENCES_DEADLINE);
@@ -29,15 +35,6 @@ public class SettingActivity extends PreferenceActivity {
 			entriesValue[i] = Integer.toString(i);
 		}
 		deadlinePreference.setEntryValues(entriesValue);
-
-		// PREFERENCES_DEADLINE refresh
-		deadlinePreference.setOnPreferenceChangeListener(new ListPreference.OnPreferenceChangeListener() {
-			@Override
-			public boolean onPreferenceChange(Preference preference, Object newValue) {
-				updateDeadlinePreferenceSummary((String) newValue);
-				return true;
-			}
-		});
 
 		// update stuff
 		updateDeadlinePreferenceSummary(null);
