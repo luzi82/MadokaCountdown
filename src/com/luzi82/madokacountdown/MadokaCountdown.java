@@ -30,7 +30,9 @@ public class MadokaCountdown {
 		TV, WEB,
 	}
 
-	public static final int[] VOICE_ID = { R.raw.char_01, R.raw.char_02, R.raw.char_03, R.raw.char_04, R.raw.char_05, R.raw.char_06, R.raw.char_07, R.raw.char_08, R.raw.char_09, R.raw.char_10, R.raw.char_11, R.raw.char_12, R.raw.char_13, R.raw.char_14, R.raw.char_15, R.raw.char_16, R.raw.char_17, R.raw.char_18, R.raw.char_19, R.raw.char_20, };
+	public static final int[][] VOICE_ID = { { R.raw.char_01, R.raw.char_02, R.raw.char_03, R.raw.char_04 }, { R.raw.char_05, R.raw.char_06, R.raw.char_07, R.raw.char_08 }, { R.raw.char_09, R.raw.char_10, R.raw.char_11, R.raw.char_12 }, { R.raw.char_13, R.raw.char_14, R.raw.char_15, R.raw.char_16 }, { R.raw.char_17, R.raw.char_18, R.raw.char_19, R.raw.char_20 } };
+	
+	public static final int[] ICON_ID = {R.drawable.char_mk,R.drawable.char_ha,R.drawable.char_mt,R.drawable.char_sm,R.drawable.qb_128};
 
 	static void logd(String msg) {
 		if (!DEBUG) {

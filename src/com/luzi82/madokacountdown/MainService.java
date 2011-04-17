@@ -225,9 +225,12 @@ public class MainService extends Service {
 	// mBoardcastEnd = deadline.getTime().getTime();
 	// }
 
+	int mIconImgId = R.drawable.qb_128;
+
 	private synchronized void doUpdate(AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
 		// MadokaCountdown.logd("doUpdate " + mBoardcastStart);
 		RemoteViews views = new RemoteViews(getPackageName(), R.layout.appwidget);
+		views.setImageViewResource(R.id.voiceButton, mIconImgId);
 		int diff = (int) (getBoardcastStart() - (now + 500));
 		if (diff > 0) {
 			diff /= 1000;
@@ -331,7 +334,10 @@ public class MainService extends Service {
 			mMediaPlayer = null;
 			return;
 		}
-		int voiceId = MadokaCountdown.VOICE_ID[random.nextInt(MadokaCountdown.VOICE_ID.length)];
+		int charNum = random.nextInt(MadokaCountdown.ICON_ID.length);
+		mIconImgId = MadokaCountdown.ICON_ID[charNum];
+		int[] voiceIdV = MadokaCountdown.VOICE_ID[charNum];
+		int voiceId = voiceIdV[random.nextInt(voiceIdV.length)];
 
 		mMediaPlayer = MediaPlayer.create(this, voiceId);
 		mMediaPlayer.setOnCompletionListener(mMediaPlayerListener);
@@ -339,6 +345,8 @@ public class MainService extends Service {
 
 		mMediaPlayer.setVolume(1.0f, 1.0f);
 		mMediaPlayer.start();
+		
+		redraw(System.currentTimeMillis());
 	}
 
 	class MediaPlayerListener implements OnCompletionListener, OnErrorListener {
