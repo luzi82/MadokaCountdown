@@ -1,5 +1,6 @@
 package com.luzi82.madokacountdown;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -7,21 +8,25 @@ import android.preference.PreferenceActivity;
 
 public class SettingActivity extends PreferenceActivity {
 
-	public static final String PREFERENCE_NAME = "com.luzi82.madokacountdown.SettingActivity";
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		MadokaCountdown.initValue(this);
+
 		// Load the preferences from an XML resource
-		getPreferenceManager().setSharedPreferencesName(PREFERENCE_NAME);
-		initValue(getPreferenceManager().getSharedPreferences());
+		getPreferenceManager().setSharedPreferencesName(MadokaCountdown.PREFERENCE_NAME);
 		addPreferencesFromResource(R.xml.preferences);
+
 		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
 			@Override
 			public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 				if (key.equals(MadokaCountdown.PREFERENCES_DEADLINE)) {
 					updateDeadlinePreferenceSummary(null);
+					
+					Intent updateIntent = new Intent(MainService.SETTING_CHANGE);
+					updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+					sendBroadcast(updateIntent);
 				}
 			}
 		});
@@ -37,23 +42,6 @@ public class SettingActivity extends PreferenceActivity {
 
 		// update stuff
 		updateDeadlinePreferenceSummary(null);
-	}
-
-	static public void initValue(SharedPreferences sp) {
-		SharedPreferences.Editor editor = sp.edit();
-		if (!sp.contains(MadokaCountdown.PREFERENCES_DEADLINE)) {
-			editor.putString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
-		}
-		editor.commit();
-	}
-
-	static public int getRefreshPeroid(SharedPreferences sp) {
-		try {
-			String retString = sp.getString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
-			return Integer.parseInt(retString);
-		} catch (Throwable t) {
-			return 0;
-		}
 	}
 
 	// @Override

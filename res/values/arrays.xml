@@ -25,17 +25,17 @@
     </string-array>
 
     <string-array name="deadline_start">
-    	<item>2011-04-22 02:40 GMT+09</item>
-    	<item>2011-04-22 03:00 GMT+09</item>
-    	<item>2011-04-25 02:45 GMT+09</item>
-    	<item>2011-04-25 04:15 GMT+09</item>
-    	<item>2011-04-25 12:00 GMT+09</item>
+    	<item>2011-04-22 02:40:00.000+0900</item>
+    	<item>2011-04-22 03:00:00.000+0900</item>
+    	<item>2011-04-25 02:45:00.000+0900</item>
+    	<item>2011-04-25 04:15:00.000+0900</item>
+    	<item>2011-04-25 12:00:00.000+0900</item>
     </string-array>
 
     <string-array name="deadline_end">
-    	<item>2011-04-22 03:40 GMT+09</item>
-    	<item>2011-04-22 04:30 GMT+09</item>
-    	<item>2011-04-25 04:15 GMT+09</item>
+    	<item>2011-04-22 03:40:00.000+0900</item>
+    	<item>2011-04-22 04:30:00.000+0900</item>
+    	<item>2011-04-25 04:15:00.000+0900</item>
     	<item>null</item>
     	<item>null</item>
     </string-array>

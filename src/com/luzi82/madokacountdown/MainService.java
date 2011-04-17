@@ -1,9 +1,7 @@
 package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
-import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,6 +20,7 @@ import android.widget.RemoteViews;
 
 public class MainService extends Service {
 
+	public static String SETTING_CHANGE = "MadokaCountdown.SETTING_CHANGE";
 	public static String UPDATE = "MadokaCountdown.UPDATE";
 
 	// that is no good when install in off state
@@ -36,7 +35,10 @@ public class MainService extends Service {
 			String action = intent.getAction();
 
 			synchronized (MainService.this) {
-				if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+				if (action.equals(SETTING_CHANGE)) {
+					mBoardcastStart = -2;
+					mBoardcastEnd = -2;
+				} else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
 					mScreenOn = false;
 				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
 					mScreenOn = true;
@@ -55,7 +57,7 @@ public class MainService extends Service {
 			mScreenOn = false;
 			break;
 		}
-		boolean timeGood = now < mBoardcastEnd;
+		boolean timeGood = now < getBoardcastEnd();
 		boolean widgetExist = getWidgetExist();
 		if (widgetExist && mScreenOn && timeGood) {
 			startTimer();
@@ -106,12 +108,12 @@ public class MainService extends Service {
 	}
 
 	synchronized void redraw(long time) {
-		MadokaCountdown.logd("MainService.run");
+		// MadokaCountdown.logd("MainService.run");
 		AppWidgetManager awm = AppWidgetManager.getInstance(MainService.this);
 		int[] ids = awm.getAppWidgetIds(new ComponentName(MainService.this, CountdownAppWidgetProvider.class));
 		if ((ids != null) && (ids.length > 0)) {
-			MadokaCountdown.logd("time " + time);
-			doUpdate(MainService.this, awm, ids, time);
+			// MadokaCountdown.logd("time " + time);
+			doUpdate(awm, ids, time);
 		}
 	}
 
@@ -129,16 +131,38 @@ public class MainService extends Service {
 	public void onCreate() {
 		super.onCreate();
 
+		MadokaCountdown.initValue(this);
+
 		mScreenDetect = new ScreenDetect(this);
 
 		initIntentFilter();
+		// initOnSharedPreferenceChangeListener();
 
 		updateTimer(System.currentTimeMillis());
 	}
 
+	// private void initOnSharedPreferenceChangeListener() {
+	// MadokaCountdown.logd("initOnSharedPreferenceChangeListener");
+	// SharedPreferences sp =
+	// getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
+	// sp.registerOnSharedPreferenceChangeListener(new
+	// SharedPreferences.OnSharedPreferenceChangeListener() {
+	// @Override
+	// public void onSharedPreferenceChanged(SharedPreferences
+	// sharedPreferences, String key) {
+	// MadokaCountdown.logd("onSharedPreferenceChanged");
+	// if (key.equals(MadokaCountdown.PREFERENCES_DEADLINE)) {
+	// mBoardcastStart = -2;
+	// mBoardcastEnd = -2;
+	// }
+	// }
+	// });
+	// }
+
 	private void initIntentFilter() {
 		IntentFilter commandFilter = new IntentFilter();
 		commandFilter.addAction(UPDATE);
+		commandFilter.addAction(SETTING_CHANGE);
 		commandFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		commandFilter.addAction(Intent.ACTION_SCREEN_ON);
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
@@ -178,22 +202,22 @@ public class MainService extends Service {
 
 	// //////////////////////////////////////
 
-	static long mBoardcastStart;
-	static long mBoardcastEnd;
-	static {
-		GregorianCalendar deadline = new GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
-		deadline.set(2011, Calendar.APRIL, 22, 2, 40, 0);
-		deadline.set(Calendar.MILLISECOND, 0);
-		mBoardcastStart = deadline.getTime().getTime();
-		deadline = new GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
-		deadline.set(2011, Calendar.APRIL, 22, 3, 40, 0);
-		deadline.set(Calendar.MILLISECOND, 0);
-		mBoardcastEnd = deadline.getTime().getTime();
-	}
+	// static {
+	// GregorianCalendar deadline = new
+	// GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
+	// deadline.set(2011, Calendar.APRIL, 22, 2, 40, 0);
+	// deadline.set(Calendar.MILLISECOND, 0);
+	// mBoardcastStart = deadline.getTime().getTime();
+	// deadline = new GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
+	// deadline.set(2011, Calendar.APRIL, 22, 3, 40, 0);
+	// deadline.set(Calendar.MILLISECOND, 0);
+	// mBoardcastEnd = deadline.getTime().getTime();
+	// }
 
-	private static void doUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
-		RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.appwidget);
-		int diff = (int) (mBoardcastStart - (now + 500));
+	private synchronized void doUpdate(AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
+		// MadokaCountdown.logd("doUpdate " + mBoardcastStart);
+		RemoteViews views = new RemoteViews(getPackageName(), R.layout.appwidget);
+		int diff = (int) (getBoardcastStart() - (now + 500));
 		if (diff > 0) {
 			diff /= 1000;
 
@@ -227,7 +251,7 @@ public class MainService extends Service {
 		} else {
 			views.setViewVisibility(R.id.day, View.GONE);
 			views.setViewVisibility(R.id.daytxt, View.GONE);
-			diff = (int) (mBoardcastEnd - (now + 500));
+			diff = (int) (getBoardcastEnd() - (now + 500));
 			String s;
 			if (diff > 0) {
 				s = "放送中";
@@ -237,8 +261,8 @@ public class MainService extends Service {
 			views.setTextViewText(R.id.time, s);
 		}
 		if (views != null) {
-			Intent intent = new Intent(context, MainMenuActivity.class);
-			PendingIntent pi = PendingIntent.getActivity(context, 0, intent, 0);
+			Intent intent = new Intent(this, MainMenuActivity.class);
+			PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
 
 			// PendingIntent pi = PendingIntent.getActivity(context, 0, link,
 			// 0);
@@ -246,5 +270,24 @@ public class MainService extends Service {
 
 			appWidgetManager.updateAppWidget(appWidgetIds, views);
 		}
+	}
+
+	// ////////////////////////////////
+
+	private long mBoardcastStart = -2;
+	private long mBoardcastEnd = -2;
+
+	private long getBoardcastStart() {
+		if (mBoardcastStart == -2) {
+			mBoardcastStart = MadokaCountdown.getDeadlineSettingStart(this);
+		}
+		return mBoardcastStart;
+	}
+
+	private long getBoardcastEnd() {
+		if (mBoardcastEnd == -2) {
+			mBoardcastEnd = MadokaCountdown.getDeadlineSettingEnd(this);
+		}
+		return mBoardcastEnd;
 	}
 }

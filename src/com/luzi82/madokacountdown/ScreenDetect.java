@@ -26,14 +26,14 @@ public class ScreenDetect {
 
 	// 1=on, -1=off, 0=unknown
 	public int getScreenState() {
-		MadokaCountdown.logd("getScreenState");
+//		MadokaCountdown.logd("getScreenState");
 		if (mPowerManager == null) {
 			return 0;
 		}
 		boolean b;
 		try {
 			b = (Boolean) mMethod.invoke(mPowerManager);
-			MadokaCountdown.logd(b ? "screen on" : "screen off");
+//			MadokaCountdown.logd(b ? "screen on" : "screen off");
 			return b ? 1 : -1;
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
