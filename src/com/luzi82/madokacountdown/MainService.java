@@ -5,6 +5,8 @@ import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import com.luzi82.madokacountdown.MadokaCountdown.DeadlineType;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -231,6 +233,7 @@ public class MainService extends Service {
 
 			if (day > 0) {
 				views.setTextViewText(R.id.day, Integer.toString(day));
+				views.setViewVisibility(R.id.day, View.VISIBLE);
 				views.setViewVisibility(R.id.daytxt, View.VISIBLE);
 				String s = String.format("%02d:%02d:%02d", hr, min, sec);
 				views.setTextViewText(R.id.time, s);
@@ -251,9 +254,14 @@ public class MainService extends Service {
 		} else {
 			views.setViewVisibility(R.id.day, View.GONE);
 			views.setViewVisibility(R.id.daytxt, View.GONE);
+
+			DeadlineType mDeadlineType = getDeadlineType();
 			diff = (int) (getBoardcastEnd() - (now + 500));
+
 			String s;
-			if (diff > 0) {
+			if (mDeadlineType == DeadlineType.WEB) {
+				s = "配信中";
+			} else if (diff > 0) {
 				s = "放送中";
 			} else {
 				s = "放送終了";
@@ -276,6 +284,7 @@ public class MainService extends Service {
 
 	private long mBoardcastStart = -2;
 	private long mBoardcastEnd = -2;
+	private DeadlineType mDeadlineType;
 
 	private long getBoardcastStart() {
 		if (mBoardcastStart == -2) {
@@ -289,5 +298,12 @@ public class MainService extends Service {
 			mBoardcastEnd = MadokaCountdown.getDeadlineSettingEnd(this);
 		}
 		return mBoardcastEnd;
+	}
+
+	private DeadlineType getDeadlineType() {
+		if (mDeadlineType == null) {
+			mDeadlineType = MadokaCountdown.getDeadlineType(this);
+		}
+		return mDeadlineType;
 	}
 }

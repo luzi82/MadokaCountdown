@@ -26,6 +26,10 @@ public class MadokaCountdown {
 	public static final String PREFERENCES_SECS = "secs";
 	public static final Map<String, String> PREFERENCES_DEFAULT = new TreeMap<String, String>();
 
+	enum DeadlineType {
+		TV, WEB,
+	}
+
 	// static{
 	// PREFERENCES_DEFAULT.put(PREFERENCES_DEADLINE, "0");
 	// PREFERENCES_DEFAULT.put(PREFERENCES_CHARATER, "0");
@@ -62,13 +66,11 @@ public class MadokaCountdown {
 	static private SimpleDateFormat mDeadlineFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 
 	static public long getDeadlineSettingStart(Context context) {
-		SharedPreferences sp = context.getSharedPreferences(PREFERENCE_NAME, 0);
-		String valueString = sp.getString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
-		int valueInt = Integer.parseInt(valueString);
+		int valueInt = getDeadlineSettingSelection(context);
 
 		Resources res = context.getResources();
 		String deadline = res.getStringArray(R.array.deadline_start)[valueInt];
-		logd("getDeadlineSettingStart "+deadline);
+		logd("getDeadlineSettingStart " + deadline);
 
 		try {
 			Date date = mDeadlineFormat.parse(deadline);
@@ -80,19 +82,36 @@ public class MadokaCountdown {
 	}
 
 	static public long getDeadlineSettingEnd(Context context) {
-		SharedPreferences sp = context.getSharedPreferences(PREFERENCE_NAME, 0);
-		String valueString = sp.getString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
-		int valueInt = Integer.parseInt(valueString);
+		int valueInt = getDeadlineSettingSelection(context);
 
 		Resources res = context.getResources();
 		String deadline = res.getStringArray(R.array.deadline_end)[valueInt];
 
-		try {
-			Date date = mDeadlineFormat.parse(deadline);
-			return date.getTime();
-		} catch (ParseException e) {
-			return -1; // should not happen
+		if (!deadline.equals("download")) {
+			try {
+				Date date = mDeadlineFormat.parse(deadline);
+				return date.getTime();
+			} catch (ParseException e) {
+				return -1; // should not happen
+			}
+		} else {
+			return getDeadlineSettingStart(context);
 		}
+	}
+
+	static public DeadlineType getDeadlineType(Context context) {
+		int valueInt = getDeadlineSettingSelection(context);
+
+		Resources res = context.getResources();
+		String type = res.getStringArray(R.array.deadline_type)[valueInt];
+
+		return DeadlineType.valueOf(type);
+	}
+
+	static public int getDeadlineSettingSelection(Context context) {
+		SharedPreferences sp = context.getSharedPreferences(PREFERENCE_NAME, 0);
+		String valueString = sp.getString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
+		return Integer.parseInt(valueString);
 	}
 
 }

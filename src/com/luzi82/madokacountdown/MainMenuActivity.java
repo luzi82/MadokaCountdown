@@ -61,10 +61,10 @@ public class MainMenuActivity extends Activity {
 	}
 
 	protected void onPause() {
+		super.onPause();
 		if (!isFinishing()) {
 			finish();
 		}
-		super.onPause();
 	}
 
 }

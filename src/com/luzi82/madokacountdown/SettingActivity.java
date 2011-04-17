@@ -12,24 +12,16 @@ public class SettingActivity extends PreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		MadokaCountdown.logd("onCreate");
+
 		MadokaCountdown.initValue(this);
 
 		// Load the preferences from an XML resource
 		getPreferenceManager().setSharedPreferencesName(MadokaCountdown.PREFERENCE_NAME);
 		addPreferencesFromResource(R.xml.preferences);
 
-		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
-			@Override
-			public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-				if (key.equals(MadokaCountdown.PREFERENCES_DEADLINE)) {
-					updateDeadlinePreferenceSummary(null);
-					
-					Intent updateIntent = new Intent(MainService.SETTING_CHANGE);
-					updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-					sendBroadcast(updateIntent);
-				}
-			}
-		});
+		SharedPreferences sp = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
+		sp.registerOnSharedPreferenceChangeListener(changeListener);
 
 		// PREFERENCES_DEADLINE value
 		ListPreference deadlinePreference = (ListPreference) findPreference(MadokaCountdown.PREFERENCES_DEADLINE);
@@ -44,19 +36,21 @@ public class SettingActivity extends PreferenceActivity {
 		updateDeadlinePreferenceSummary(null);
 	}
 
-	// @Override
-	// public void onSharedPreferenceChanged(SharedPreferences
-	// sharedPreferences, String key) {
-	// if (key.equals(REFRESH_PEROID_KEY)) {
-	// resetRefreshPeriodPreferenceSummary();
-	// }
-	// if (key.equals(COLOR_KEY) || key.equals(COLOR_CHEAT_KEY)) {
-	// resetColorPreferenceSummary();
-	// }
-	// if (key.equals(COLORMODE_KEY)) {
-	// resetColorModePreferenceSummary();
-	// }
-	// }
+//	@Override
+//	protected void onPause() {
+//		super.onPause();
+//		if (!isFinishing()) {
+//			finish();
+//		}
+//	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+
+		SharedPreferences sp = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
+		sp.unregisterOnSharedPreferenceChangeListener(changeListener);
+	}
 
 	public void updateDeadlinePreferenceSummary(String value) {
 		ListPreference deadlinePreference = (ListPreference) findPreference(MadokaCountdown.PREFERENCES_DEADLINE);
@@ -65,5 +59,21 @@ public class SettingActivity extends PreferenceActivity {
 		}
 		deadlinePreference.setSummary(deadlinePreference.getEntries()[Integer.parseInt(value)]);
 	}
+
+	//
+
+	SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			MadokaCountdown.logd("onSharedPreferenceChanged");
+			if (key.equals(MadokaCountdown.PREFERENCES_DEADLINE)) {
+				updateDeadlinePreferenceSummary(null);
+
+				Intent updateIntent = new Intent(MainService.SETTING_CHANGE);
+				updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+				sendBroadcast(updateIntent);
+			}
+		}
+	};
 
 }
