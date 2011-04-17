@@ -15,7 +15,7 @@ public class MadokaCountdown {
 
 	public static String TAG = "MadokaCountdown";
 
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 
 	public static final String PREFERENCE_NAME = "com.luzi82.madokacountdown.SettingActivity";
 
