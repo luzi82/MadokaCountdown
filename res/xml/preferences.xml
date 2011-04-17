@@ -4,4 +4,13 @@
 	<ListPreference android:key="deadline" android:title="@string/deadline"
 		android:dialogTitle="@string/deadline" android:entries="@array/deadline_name" />
 
+	<PreferenceScreen
+		android:title="@string/preference_charselection">
+		<CheckBoxPreference android:key="char_madoka" android:title="鹿目 まどか" />
+		<CheckBoxPreference android:key="char_homura" android:title="暁美 ほむら" />
+		<CheckBoxPreference android:key="char_mami" android:title="巴 マミ" />
+		<CheckBoxPreference android:key="char_sayaka" android:title="美樹 さやか" />
+		<CheckBoxPreference android:key="char_qb" android:title="キュゥべえ" />
+	</PreferenceScreen>
+
 </PreferenceScreen>

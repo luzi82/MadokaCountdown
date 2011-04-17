@@ -13,7 +13,6 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		super.onUpdate(context, appWidgetManager, appWidgetIds);
-//		doUpdate(context, appWidgetManager, appWidgetIds, System.currentTimeMillis());
 
 		Intent i = new Intent(context, MainService.class);
 		context.startService(i);
@@ -21,6 +20,10 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 		Intent updateIntent = new Intent(MainService.UPDATE);
 		updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
 		context.sendBroadcast(updateIntent);
+
+		Intent settingChangeIntent = new Intent(MainService.SETTINGCHANGE_CHAR);
+		settingChangeIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+		context.sendBroadcast(settingChangeIntent);
 	}
 
 }
