@@ -2,6 +2,7 @@ package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
 import java.util.GregorianCalendar;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,6 +17,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
 import android.os.IBinder;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -24,6 +28,7 @@ public class MainService extends Service {
 
 	public static String SETTING_CHANGE = "MadokaCountdown.SETTING_CHANGE";
 	public static String UPDATE = "MadokaCountdown.UPDATE";
+	public static String VOICE = "MadokaCountdown.VOICE";
 
 	// that is no good when install in off state
 	// but the screen detection is in LEVEL 7
@@ -44,10 +49,13 @@ public class MainService extends Service {
 					mScreenOn = false;
 				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
 					mScreenOn = true;
+				} else if (action.equals(VOICE)) {
+					triggerVoice();
 				}
 				updateTimer(System.currentTimeMillis());
 			}
 		}
+
 	};
 
 	synchronized void updateTimer(long now) {
@@ -165,6 +173,7 @@ public class MainService extends Service {
 		IntentFilter commandFilter = new IntentFilter();
 		commandFilter.addAction(UPDATE);
 		commandFilter.addAction(SETTING_CHANGE);
+		commandFilter.addAction(VOICE);
 		commandFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		commandFilter.addAction(Intent.ACTION_SCREEN_ON);
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
@@ -269,12 +278,13 @@ public class MainService extends Service {
 			views.setTextViewText(R.id.time, s);
 		}
 		if (views != null) {
-			Intent intent = new Intent(this, MainMenuActivity.class);
-			PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
+			Intent voiceIntent = new Intent(MainService.VOICE);
+			PendingIntent voicePendingIntent = PendingIntent.getBroadcast(this, 0, voiceIntent, 0);
+			views.setOnClickPendingIntent(R.id.voiceButton, voicePendingIntent);
 
-			// PendingIntent pi = PendingIntent.getActivity(context, 0, link,
-			// 0);
-			views.setOnClickPendingIntent(R.id.link, pi);
+			Intent mainMenuIntent = new Intent(this, MainMenuActivity.class);
+			PendingIntent mainMenuPendingIntent = PendingIntent.getActivity(this, 0, mainMenuIntent, 0);
+			views.setOnClickPendingIntent(R.id.link, mainMenuPendingIntent);
 
 			appWidgetManager.updateAppWidget(appWidgetIds, views);
 		}
@@ -306,4 +316,48 @@ public class MainService extends Service {
 		}
 		return mDeadlineType;
 	}
+
+	// /////////////////////////////////
+
+	MediaPlayer mMediaPlayer;
+	MediaPlayerListener mMediaPlayerListener = new MediaPlayerListener();
+
+	private void triggerVoice() {
+		MadokaCountdown.logd("playVoice");
+
+		if (mMediaPlayer != null) {
+			mMediaPlayer.stop();
+			mMediaPlayer.release();
+			mMediaPlayer = null;
+			return;
+		}
+		int voiceId = MadokaCountdown.VOICE_ID[random.nextInt(MadokaCountdown.VOICE_ID.length)];
+
+		mMediaPlayer = MediaPlayer.create(this, voiceId);
+		mMediaPlayer.setOnCompletionListener(mMediaPlayerListener);
+		mMediaPlayer.setOnErrorListener(mMediaPlayerListener);
+
+		mMediaPlayer.setVolume(1.0f, 1.0f);
+		mMediaPlayer.start();
+	}
+
+	class MediaPlayerListener implements OnCompletionListener, OnErrorListener {
+		@Override
+		public void onCompletion(MediaPlayer mp) {
+			mp.release();
+			mMediaPlayer = null;
+		}
+
+		@Override
+		public boolean onError(MediaPlayer mp, int what, int extra) {
+			mp.release();
+			mMediaPlayer = null;
+			return true;
+		}
+	};
+
+	// ///
+
+	Random random = new Random();
+
 }

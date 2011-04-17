@@ -30,13 +30,7 @@ public class MadokaCountdown {
 		TV, WEB,
 	}
 
-	// static{
-	// PREFERENCES_DEFAULT.put(PREFERENCES_DEADLINE, "0");
-	// PREFERENCES_DEFAULT.put(PREFERENCES_CHARATER, "0");
-	// PREFERENCES_DEFAULT.put(PREFERENCES_NTP, "0");
-	// PREFERENCES_DEFAULT.put(PREFERENCES_NEWS, "0");
-	// PREFERENCES_DEFAULT.put(PREFERENCES_SECS, "0");
-	// }
+	public static final int[] VOICE_ID = { R.raw.char_01, R.raw.char_02, R.raw.char_03, R.raw.char_04, R.raw.char_05, R.raw.char_06, R.raw.char_07, R.raw.char_08, R.raw.char_09, R.raw.char_10, R.raw.char_11, R.raw.char_12, R.raw.char_13, R.raw.char_14, R.raw.char_15, R.raw.char_16, R.raw.char_17, R.raw.char_18, R.raw.char_19, R.raw.char_20, };
 
 	static void logd(String msg) {
 		if (!DEBUG) {

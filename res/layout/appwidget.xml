@@ -17,10 +17,6 @@
 		</LinearLayout>
 	</LinearLayout>
 
-	<ImageView android:layout_width="wrap_content"
-		android:layout_height="fill_parent" android:gravity="center_vertical|left"
-		android:src="@drawable/qb_128" />
-
 	<LinearLayout android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:orientation="horizontal"
 		android:gravity="center_vertical|center_horizontal"
@@ -50,5 +46,10 @@
 	<ImageButton android:id="@+id/link" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:src="@drawable/zero"
 		android:background="@drawable/zero" />
+
+	<ImageButton android:id="@+id/voiceButton"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:gravity="center_vertical|left" android:src="@drawable/qb_128"
+		android:background="@drawable/zero" android:scaleType="centerInside" />
 
 </RelativeLayout>
