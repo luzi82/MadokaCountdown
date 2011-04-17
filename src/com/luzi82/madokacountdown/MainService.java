@@ -2,6 +2,8 @@ package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
 import java.util.GregorianCalendar;
+import java.util.LinkedList;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,6 +18,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
 import android.os.IBinder;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -23,7 +29,9 @@ import android.widget.RemoteViews;
 public class MainService extends Service {
 
 	public static String SETTING_CHANGE = "MadokaCountdown.SETTING_CHANGE";
+	public static String SETTINGCHANGE_CHAR = "MadokaCountdown.SETTINGCHANGE_CHAR";
 	public static String UPDATE = "MadokaCountdown.UPDATE";
+	public static String VOICE = "MadokaCountdown.VOICE";
 
 	// that is no good when install in off state
 	// but the screen detection is in LEVEL 7
@@ -44,10 +52,15 @@ public class MainService extends Service {
 					mScreenOn = false;
 				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
 					mScreenOn = true;
+				} else if (action.equals(VOICE)) {
+					triggerVoice();
+				} else if (action.equals(SETTINGCHANGE_CHAR)) {
+					changeIconOnly(intent.getIntArrayExtra(MadokaCountdown.AVAILABLE_CHAR));
 				}
 				updateTimer(System.currentTimeMillis());
 			}
 		}
+
 	};
 
 	synchronized void updateTimer(long now) {
@@ -138,33 +151,16 @@ public class MainService extends Service {
 		mScreenDetect = new ScreenDetect(this);
 
 		initIntentFilter();
-		// initOnSharedPreferenceChangeListener();
 
 		updateTimer(System.currentTimeMillis());
 	}
-
-	// private void initOnSharedPreferenceChangeListener() {
-	// MadokaCountdown.logd("initOnSharedPreferenceChangeListener");
-	// SharedPreferences sp =
-	// getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
-	// sp.registerOnSharedPreferenceChangeListener(new
-	// SharedPreferences.OnSharedPreferenceChangeListener() {
-	// @Override
-	// public void onSharedPreferenceChanged(SharedPreferences
-	// sharedPreferences, String key) {
-	// MadokaCountdown.logd("onSharedPreferenceChanged");
-	// if (key.equals(MadokaCountdown.PREFERENCES_DEADLINE)) {
-	// mBoardcastStart = -2;
-	// mBoardcastEnd = -2;
-	// }
-	// }
-	// });
-	// }
 
 	private void initIntentFilter() {
 		IntentFilter commandFilter = new IntentFilter();
 		commandFilter.addAction(UPDATE);
 		commandFilter.addAction(SETTING_CHANGE);
+		commandFilter.addAction(VOICE);
+		commandFilter.addAction(SETTINGCHANGE_CHAR);
 		commandFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		commandFilter.addAction(Intent.ACTION_SCREEN_ON);
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
@@ -204,21 +200,12 @@ public class MainService extends Service {
 
 	// //////////////////////////////////////
 
-	// static {
-	// GregorianCalendar deadline = new
-	// GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
-	// deadline.set(2011, Calendar.APRIL, 22, 2, 40, 0);
-	// deadline.set(Calendar.MILLISECOND, 0);
-	// mBoardcastStart = deadline.getTime().getTime();
-	// deadline = new GregorianCalendar(TimeZone.getTimeZone("GMT+09"));
-	// deadline.set(2011, Calendar.APRIL, 22, 3, 40, 0);
-	// deadline.set(Calendar.MILLISECOND, 0);
-	// mBoardcastEnd = deadline.getTime().getTime();
-	// }
+	int mIconImgId = R.drawable.qb_128;
 
 	private synchronized void doUpdate(AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
 		// MadokaCountdown.logd("doUpdate " + mBoardcastStart);
 		RemoteViews views = new RemoteViews(getPackageName(), R.layout.appwidget);
+		views.setImageViewResource(R.id.voiceButton, mIconImgId);
 		int diff = (int) (getBoardcastStart() - (now + 500));
 		if (diff > 0) {
 			diff /= 1000;
@@ -269,12 +256,13 @@ public class MainService extends Service {
 			views.setTextViewText(R.id.time, s);
 		}
 		if (views != null) {
-			Intent intent = new Intent(this, MainMenuActivity.class);
-			PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
+			Intent voiceIntent = new Intent(MainService.VOICE);
+			PendingIntent voicePendingIntent = PendingIntent.getBroadcast(this, 0, voiceIntent, 0);
+			views.setOnClickPendingIntent(R.id.voiceButton, voicePendingIntent);
 
-			// PendingIntent pi = PendingIntent.getActivity(context, 0, link,
-			// 0);
-			views.setOnClickPendingIntent(R.id.link, pi);
+			Intent mainMenuIntent = new Intent(this, MainMenuActivity.class);
+			PendingIntent mainMenuPendingIntent = PendingIntent.getActivity(this, 0, mainMenuIntent, 0);
+			views.setOnClickPendingIntent(R.id.link, mainMenuPendingIntent);
 
 			appWidgetManager.updateAppWidget(appWidgetIds, views);
 		}
@@ -306,4 +294,91 @@ public class MainService extends Service {
 		}
 		return mDeadlineType;
 	}
+
+	// /////////////////////////////////
+
+	MediaPlayer mMediaPlayer;
+	MediaPlayerListener mMediaPlayerListener = new MediaPlayerListener();
+	static final int CHAR_SIZE = MadokaCountdown.PREF_ID.length;
+
+	private void triggerVoice() {
+		MadokaCountdown.logd("playVoice");
+
+		if (mMediaPlayer != null) {
+			mMediaPlayer.stop();
+			mMediaPlayer.release();
+			mMediaPlayer = null;
+			return;
+		}
+
+		LinkedList<Integer> availableChar = new LinkedList<Integer>();
+
+		SharedPreferences sp = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
+		for (int i = 0; i < CHAR_SIZE; ++i) {
+			if (sp.getBoolean(MadokaCountdown.PREF_ID[i], true)) {
+				availableChar.add(i);
+			}
+		}
+
+		if (availableChar.isEmpty()) {
+			return;
+		}
+
+		int charNum = availableChar.get(random.nextInt(availableChar.size()));
+		mIconImgId = MadokaCountdown.ICON_ID[charNum];
+		int[] voiceIdV = MadokaCountdown.VOICE_ID[charNum];
+		int voiceId = voiceIdV[random.nextInt(voiceIdV.length)];
+
+		mMediaPlayer = MediaPlayer.create(this, voiceId);
+		mMediaPlayer.setOnCompletionListener(mMediaPlayerListener);
+		mMediaPlayer.setOnErrorListener(mMediaPlayerListener);
+
+		mMediaPlayer.setVolume(1.0f, 1.0f);
+		mMediaPlayer.start();
+
+		redraw(System.currentTimeMillis());
+	}
+
+	class MediaPlayerListener implements OnCompletionListener, OnErrorListener {
+		@Override
+		public void onCompletion(MediaPlayer mp) {
+			mp.release();
+			mMediaPlayer = null;
+		}
+
+		@Override
+		public boolean onError(MediaPlayer mp, int what, int extra) {
+			mp.release();
+			mMediaPlayer = null;
+			return true;
+		}
+	};
+
+	// ///
+
+	void changeIconOnly(int[] available) {
+		if (available == null) {
+			SharedPreferences sharedPreferences = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
+			LinkedList<Integer> lli = new LinkedList<Integer>();
+			for (int i = 0; i < MadokaCountdown.PREF_ID.length; ++i) {
+				if (sharedPreferences.getBoolean(MadokaCountdown.PREF_ID[i], true))
+					lli.add(i);
+			}
+			available = new int[lli.size()];
+			for (int i = 0; i < available.length; ++i) {
+				available[i] = lli.get(i);
+			}
+		}
+		for (int a : available) {
+			if (MadokaCountdown.ICON_ID[a] == mIconImgId)
+				return;
+		}
+		int charNum = available[random.nextInt(available.length)];
+		mIconImgId = MadokaCountdown.ICON_ID[charNum];
+	}
+
+	// ///
+
+	Random random = new Random();
+
 }
