@@ -143,7 +143,7 @@ public class MainService extends Service {
 	// /////////////////////////////////////
 
 	@Override
-	public void onCreate() {
+	public synchronized void onCreate() {
 		super.onCreate();
 
 		MadokaCountdown.initValue(this);
@@ -152,6 +152,7 @@ public class MainService extends Service {
 
 		initIntentFilter();
 
+		changeIconOnly(null);
 		updateTimer(System.currentTimeMillis());
 	}
 
@@ -200,7 +201,7 @@ public class MainService extends Service {
 
 	// //////////////////////////////////////
 
-	int mIconImgId = R.drawable.qb_128;
+	int mIconImgId = -1;
 
 	private synchronized void doUpdate(AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
 		// MadokaCountdown.logd("doUpdate " + mBoardcastStart);
@@ -301,7 +302,7 @@ public class MainService extends Service {
 	MediaPlayerListener mMediaPlayerListener = new MediaPlayerListener();
 	static final int CHAR_SIZE = MadokaCountdown.PREF_ID.length;
 
-	private void triggerVoice() {
+	private synchronized void triggerVoice() {
 		MadokaCountdown.logd("playVoice");
 
 		if (mMediaPlayer != null) {
@@ -356,7 +357,7 @@ public class MainService extends Service {
 
 	// ///
 
-	void changeIconOnly(int[] available) {
+	synchronized void changeIconOnly(int[] available) {
 		if (available == null) {
 			SharedPreferences sharedPreferences = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
 			LinkedList<Integer> lli = new LinkedList<Integer>();
