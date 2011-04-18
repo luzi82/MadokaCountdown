@@ -21,9 +21,9 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 		updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
 		context.sendBroadcast(updateIntent);
 
-		Intent settingChangeIntent = new Intent(MainService.SETTINGCHANGE_CHAR);
-		settingChangeIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-		context.sendBroadcast(settingChangeIntent);
+//		Intent settingChangeIntent = new Intent(MainService.SETTINGCHANGE_CHAR);
+//		settingChangeIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+//		context.sendBroadcast(settingChangeIntent);
 	}
 
 }
