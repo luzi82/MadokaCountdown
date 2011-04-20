@@ -12,5 +12,12 @@
 		<CheckBoxPreference android:key="char_sayaka" android:title="美樹 さやか" />
 		<CheckBoxPreference android:key="char_qb" android:title="キュゥべえ" />
 	</PreferenceScreen>
+	
+	<Preference android:key="charity_link"
+		android:title="Support Japan"
+		android:summary="Donate via Google">
+		<intent android:action="android.intent.action.VIEW"
+			android:data="http://www.google.com/crisisresponse/japanquake2011.html" />
+	</Preference>
 
 </PreferenceScreen>
