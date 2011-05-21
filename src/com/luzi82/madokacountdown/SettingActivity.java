@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
 
 public class SettingActivity extends PreferenceActivity {
@@ -22,15 +21,6 @@ public class SettingActivity extends PreferenceActivity {
 		// Load the preferences from an XML resource
 		getPreferenceManager().setSharedPreferencesName(MadokaCountdown.PREFERENCE_NAME);
 		addPreferencesFromResource(R.xml.preferences);
-
-		// PREFERENCES_DEADLINE value
-		ListPreference deadlinePreference = (ListPreference) findPreference(MadokaCountdown.PREFERENCES_DEADLINE);
-		int valueSize = deadlinePreference.getEntries().length;
-		String[] entriesValue = new String[valueSize];
-		for (int i = 0; i < valueSize; ++i) {
-			entriesValue[i] = Integer.toString(i);
-		}
-		deadlinePreference.setEntryValues(entriesValue);
 	}
 
 	@Override
@@ -39,7 +29,6 @@ public class SettingActivity extends PreferenceActivity {
 		SharedPreferences sp = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
 		sp.registerOnSharedPreferenceChangeListener(changeListener);
 
-		updateDeadlinePreferenceSummary(null);
 		updateCharSelectionEnable(sp);
 	}
 
@@ -52,14 +41,6 @@ public class SettingActivity extends PreferenceActivity {
 		if (!isFinishing()) {
 			finish();
 		}
-	}
-
-	public void updateDeadlinePreferenceSummary(String value) {
-		ListPreference deadlinePreference = (ListPreference) findPreference(MadokaCountdown.PREFERENCES_DEADLINE);
-		if (value == null) {
-			value = (String) deadlinePreference.getValue();
-		}
-		deadlinePreference.setSummary(deadlinePreference.getEntries()[Integer.parseInt(value)]);
 	}
 
 	public void updateCharSelectionEnable(SharedPreferences sp) {
@@ -89,37 +70,29 @@ public class SettingActivity extends PreferenceActivity {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 			MadokaCountdown.logd("onSharedPreferenceChanged");
-			if (key.equals(MadokaCountdown.PREFERENCES_DEADLINE)) {
-				updateDeadlinePreferenceSummary(null);
-
-				Intent updateIntent = new Intent(MainService.SETTING_CHANGE);
-				updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-				sendBroadcast(updateIntent);
-			} else {
-				boolean charChange = false;
-				for (String c : MadokaCountdown.PREF_ID) {
-					if (key.equals(c)) {
-						charChange = true;
-						break;
-					}
+			boolean charChange = false;
+			for (String c : MadokaCountdown.PREF_ID) {
+				if (key.equals(c)) {
+					charChange = true;
+					break;
 				}
-				if (charChange) {
-					updateCharSelectionEnable(sharedPreferences);
-				}
-				LinkedList<Integer> lli = new LinkedList<Integer>();
-				for (int i = 0; i < MadokaCountdown.PREF_ID.length; ++i) {
-					if (sharedPreferences.getBoolean(MadokaCountdown.PREF_ID[i], true))
-						lli.add(i);
-				}
-				int[] lliv = new int[lli.size()];
-				for (int i = 0; i < lliv.length; ++i) {
-					lliv[i] = lli.get(i);
-				}
-				Intent updateIntent = new Intent(MainService.SETTINGCHANGE_CHAR);
-				updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-				updateIntent.putExtra(MadokaCountdown.AVAILABLE_CHAR, lliv);
-				sendBroadcast(updateIntent);
 			}
+			if (charChange) {
+				updateCharSelectionEnable(sharedPreferences);
+			}
+			LinkedList<Integer> lli = new LinkedList<Integer>();
+			for (int i = 0; i < MadokaCountdown.PREF_ID.length; ++i) {
+				if (sharedPreferences.getBoolean(MadokaCountdown.PREF_ID[i], true))
+					lli.add(i);
+			}
+			int[] lliv = new int[lli.size()];
+			for (int i = 0; i < lliv.length; ++i) {
+				lliv[i] = lli.get(i);
+			}
+			Intent updateIntent = new Intent(MainService.SETTINGCHANGE_CHAR);
+			updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+			updateIntent.putExtra(MadokaCountdown.AVAILABLE_CHAR, lliv);
+			sendBroadcast(updateIntent);
 		}
 	};
 

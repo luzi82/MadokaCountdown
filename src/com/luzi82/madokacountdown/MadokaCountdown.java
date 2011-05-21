@@ -2,7 +2,6 @@ package com.luzi82.madokacountdown;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -19,16 +18,10 @@ public class MadokaCountdown {
 
 	public static final String PREFERENCE_NAME = "com.luzi82.madokacountdown.SettingActivity";
 
-	public static final String PREFERENCES_DEADLINE = "deadline";
-	public static final String PREFERENCES_CHARATER = "charater";
 	public static final String PREFERENCES_NTP = "ntp";
 	public static final String PREFERENCES_NEWS = "news";
 	public static final String PREFERENCES_SECS = "secs";
 	public static final Map<String, String> PREFERENCES_DEFAULT = new TreeMap<String, String>();
-
-	enum DeadlineType {
-		TV, WEB,
-	}
 
 	public static final int[][] VOICE_ID = { { R.raw.char_01, R.raw.char_02, R.raw.char_03, R.raw.char_04 }, { R.raw.char_05, R.raw.char_06, R.raw.char_07, R.raw.char_08 }, { R.raw.char_09, R.raw.char_10, R.raw.char_11, R.raw.char_12 }, { R.raw.char_13, R.raw.char_14, R.raw.char_15, R.raw.char_16 }, { R.raw.char_17, R.raw.char_18, R.raw.char_19, R.raw.char_20 } };
 
@@ -48,9 +41,6 @@ public class MadokaCountdown {
 	static public void initValue(Context context) {
 		SharedPreferences sp = context.getSharedPreferences(PREFERENCE_NAME, 0);
 		SharedPreferences.Editor editor = sp.edit();
-		if (!sp.contains(MadokaCountdown.PREFERENCES_DEADLINE)) {
-			editor.putString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
-		}
 		for (String c : MadokaCountdown.PREF_ID) {
 			if (!sp.contains(c)) {
 				editor.putBoolean(c, true);
@@ -59,64 +49,35 @@ public class MadokaCountdown {
 		editor.commit();
 	}
 
-	static public int getDeadlineSetting(SharedPreferences sp) {
-		try {
-			String retString = sp.getString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
-			return Integer.parseInt(retString);
-		} catch (Throwable t) {
-			return 0;
-		}
-	}
+	static private final SimpleDateFormat mDeadlineFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 
-	static private SimpleDateFormat mDeadlineFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
-
-	static public long getDeadlineSettingStart(Context context) {
-		int valueInt = getDeadlineSettingSelection(context);
-
-		Resources res = context.getResources();
-		String deadline = res.getStringArray(R.array.deadline_start)[valueInt];
-		logd("getDeadlineSettingStart " + deadline);
-
-		try {
-			Date date = mDeadlineFormat.parse(deadline);
-			return date.getTime();
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return -1; // should not happen
-		}
-	}
-
-	static public long getDeadlineSettingEnd(Context context) {
-		int valueInt = getDeadlineSettingSelection(context);
-
-		Resources res = context.getResources();
-		String deadline = res.getStringArray(R.array.deadline_end)[valueInt];
-
-		if (!deadline.equals("download")) {
-			try {
-				Date date = mDeadlineFormat.parse(deadline);
-				return date.getTime();
-			} catch (ParseException e) {
-				return -1; // should not happen
+	static public Deadline getCurrentDeadline(Resources res) {
+		long now = System.currentTimeMillis();
+		Deadline[] deadlines = getDeadlineArray(res);
+		for (int i = 0; i < deadlines.length; ++i) {
+			long time = deadlines[i].time;
+			time += 7 * 24 * 60 * 60 * 1000;
+			if (time > now) {
+				return deadlines[i];
 			}
-		} else {
-			return getDeadlineSettingStart(context);
 		}
+		return deadlines[deadlines.length - 1];
 	}
 
-	static public DeadlineType getDeadlineType(Context context) {
-		int valueInt = getDeadlineSettingSelection(context);
-
-		Resources res = context.getResources();
-		String type = res.getStringArray(R.array.deadline_type)[valueInt];
-
-		return DeadlineType.valueOf(type);
-	}
-
-	static public int getDeadlineSettingSelection(Context context) {
-		SharedPreferences sp = context.getSharedPreferences(PREFERENCE_NAME, 0);
-		String valueString = sp.getString(MadokaCountdown.PREFERENCES_DEADLINE, "0");
-		return Integer.parseInt(valueString);
+	static public Deadline[] getDeadlineArray(Resources res) {
+		String[] deadline_name = res.getStringArray(R.array.deadline_name);
+		String[] deadline_time = res.getStringArray(R.array.deadline_time);
+		Deadline[] ret = new Deadline[deadline_time.length];
+		for (int i = 0; i < deadline_time.length; ++i) {
+			ret[i] = new Deadline();
+			ret[i].name = deadline_name[i];
+			try {
+				ret[i].time = mDeadlineFormat.parse(deadline_time[i]).getTime();
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		return ret;
 	}
 
 }
