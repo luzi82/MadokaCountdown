@@ -14,19 +14,11 @@
 <resources>
 
 	<string-array name="deadline_name">
-		<item>第2巻</item>
-		<item>第3巻</item>
-		<item>第4巻</item>
-		<item>第5巻</item>
-		<item>第6巻</item>
+		<item>PSP</item>
 	</string-array>
 
 	<string-array name="deadline_time">
-		<item>2011-05-25 00:00:00.000+0900</item>
-		<item>2011-06-22 00:00:00.000+0900</item>
-		<item>2011-07-27 00:00:00.000+0900</item>
-		<item>2011-08-24 00:00:00.000+0900</item>
-		<item>2011-09-21 00:00:00.000+0900</item>
+		<item>2012-03-15 00:00:00.000+0900</item>
 	</string-array>
 	
 </resources>
