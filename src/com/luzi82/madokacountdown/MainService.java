@@ -205,11 +205,14 @@ public class MainService extends Service {
 		int voiceId = voiceIdV[random.nextInt(voiceIdV.length)];
 
 		mMediaPlayer = MediaPlayer.create(this, voiceId);
-		mMediaPlayer.setOnCompletionListener(mMediaPlayerListener);
-		mMediaPlayer.setOnErrorListener(mMediaPlayerListener);
-
-		mMediaPlayer.setVolume(1.0f, 1.0f);
-		mMediaPlayer.start();
+		if(mMediaPlayer!=null){
+			// rare case... report say it happens, better handle it.
+			mMediaPlayer.setOnCompletionListener(mMediaPlayerListener);
+			mMediaPlayer.setOnErrorListener(mMediaPlayerListener);
+	
+			mMediaPlayer.setVolume(1.0f, 1.0f);
+			mMediaPlayer.start();
+		}
 
 		redraw(System.currentTimeMillis());
 	}
