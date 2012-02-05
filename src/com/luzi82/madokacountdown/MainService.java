@@ -1,10 +1,13 @@
 package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -24,9 +27,16 @@ import android.widget.RemoteViews;
 
 public class MainService extends Service {
 
+	public static String SETTING_CHANGE = "MadokaCountdown.SETTING_CHANGE";
 	public static String SETTINGCHANGE_CHAR = "MadokaCountdown.SETTINGCHANGE_CHAR";
 	public static String UPDATE = "MadokaCountdown.UPDATE";
 	public static String VOICE = "MadokaCountdown.VOICE";
+
+	// that is no good when install in off state
+	// but the screen detection is in LEVEL 7
+	boolean mScreenOn = true;
+
+	ScreenDetect mScreenDetect;
 
 	private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
 		@Override
@@ -35,24 +45,69 @@ public class MainService extends Service {
 			MadokaCountdown.logd("action " + action);
 
 			synchronized (MainService.this) {
-				if (action.equals(VOICE)) {
+				if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+					mScreenOn = false;
+				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
+					mScreenOn = true;
+				} else if (action.equals(VOICE)) {
 					triggerVoice();
 				} else if (action.equals(SETTINGCHANGE_CHAR)) {
 					changeIconOnly(intent.getIntArrayExtra(MadokaCountdown.AVAILABLE_CHAR));
 				}
-				redraw(System.currentTimeMillis());
-				startTimer();
+				// redraw(System.currentTimeMillis());
+				// startTimer();
+				updateTimer(System.currentTimeMillis());
 			}
 		}
 
 	};
 
+	synchronized void updateTimer(long now) {
+		switch (mScreenDetect.getScreenState()) {
+		case 1:
+			mScreenOn = true;
+			break;
+		case -1:
+			mScreenOn = false;
+			break;
+		}
+		// boolean timeGood = now < getBoardcastEnd();
+		boolean widgetExist = getWidgetExist();
+		if (widgetExist && mScreenOn) {
+			startTimer();
+		} else {
+			stopTimer();
+		}
+	}
+
 	synchronized void startTimer() {
 		startAlarm(this);
+		if (t == null) {
+			t = new Timer();
+
+			TimerTask tt = new TimerTask() {
+				@Override
+				public void run() {
+					long time = scheduledExecutionTime();
+					redraw(time);
+					updateTimer(time);
+				}
+			};
+
+			GregorianCalendar gc = new GregorianCalendar();
+			gc.set(GregorianCalendar.SECOND, gc.get(GregorianCalendar.SECOND) + 1);
+			gc.set(GregorianCalendar.MILLISECOND, 0);
+
+			t.scheduleAtFixedRate(tt, gc.getTime(), 1000);
+		}
 	}
 
 	synchronized void stopTimer() {
 		endAlarm(this);
+		if (t != null) {
+			t.cancel();
+			t = null;
+		}
 	}
 
 	synchronized void redraw(long time) {
@@ -64,6 +119,8 @@ public class MainService extends Service {
 			doUpdate(awm, ids, time);
 		}
 	}
+
+	Timer t;
 
 	boolean getWidgetExist() {
 		AppWidgetManager awm = AppWidgetManager.getInstance(this);
@@ -79,24 +136,21 @@ public class MainService extends Service {
 
 		MadokaCountdown.initValue(this);
 
+		mScreenDetect = new ScreenDetect(this);
+
 		initIntentFilter();
 
 		changeIconOnly(null);
-		
-		Timer t = new Timer();
-		t.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				redraw(System.currentTimeMillis());
-			}
-		}, 0);
+		updateTimer(System.currentTimeMillis());
 	}
 
 	private void initIntentFilter() {
 		IntentFilter commandFilter = new IntentFilter();
 		commandFilter.addAction(UPDATE);
+		// commandFilter.addAction(SETTING_CHANGE);
 		commandFilter.addAction(VOICE);
 		commandFilter.addAction(SETTINGCHANGE_CHAR);
+		commandFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		commandFilter.addAction(Intent.ACTION_SCREEN_ON);
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
 		registerReceiver(mIntentReceiver, commandFilter);
@@ -119,14 +173,8 @@ public class MainService extends Service {
 
 	public static void startAlarm(Context context) {
 		endAlarm(context);
-		
-		long next=System.currentTimeMillis();
-		next/=60*60*1000;
-		++next;
-		next*=60*60*1000;
-		
 		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		alarmManager.setInexactRepeating(AlarmManager.RTC, next, AlarmManager.INTERVAL_HOUR, getAlarmPendingIntent(context));
+		alarmManager.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, getAlarmPendingIntent(context));
 	}
 
 	public static void endAlarm(Context context) {
@@ -143,22 +191,54 @@ public class MainService extends Service {
 
 	int mIconImgId = -1;
 
+	Deadline[] mAllDeadline = null;
+
 	private synchronized void doUpdate(AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
 		// MadokaCountdown.logd("doUpdate " + mBoardcastStart);
 		RemoteViews views = new RemoteViews(getPackageName(), R.layout.appwidget);
 		views.setImageViewResource(R.id.voiceButton, mIconImgId);
-		Deadline deadline = MadokaCountdown.getCurrentDeadline(getResources());
-		if (now < deadline.time) {
-			long diff = deadline.time - now;
-			diff /= 24 * 60 * 60 * 1000;
-			++diff;
+		Deadline deadline = getCurrentDeadline();
+		if (deadline.mType == Deadline.Type.COUNTDOWN) {
+			long diff = deadline.mTimeEnd - now;
+			// diff /= 24 * 60 * 60 * 1000;
+			// ++diff;
 
-			String s = String.format("%s: %d日", deadline.name, (int) diff);
-			views.setTextViewText(R.id.txt, s);
+			diff /= 1000;
+			int sec = (int) diff % 60;
+			diff /= 60;
+			int min = (int) diff % 60;
+			diff /= 60;
+			int hr = (int) diff % 24;
+			diff /= 24;
+			int day = (int) diff;
+
+			// String s = deadline.mName+" ";
+			String s = null;
+
+			if (day > 0) {
+				s = String.format("%d日%02d:%02d:%02d", day, hr, min, sec);
+			} else if (hr > 0) {
+				s = String.format("%d:%02d:%02d", hr, min, sec);
+			} else if (min > 0) {
+				s = String.format("%d:%02d", min, sec);
+			} else {
+				s = String.format("%d", sec);
+			}
+			// views.setViewVisibility(R.id.txt, View.GONE);
+			// views.setViewVisibility(R.id.txt0, View.VISIBLE);
+			// views.setViewVisibility(R.id.txt1, View.VISIBLE);
+			views.setTextViewText(R.id.txt0, deadline.mName);
+			views.setTextViewText(R.id.txt1, s);
 		} else {
-			String s = String.format("%s 発売中", deadline.name);
-			views.setTextViewText(R.id.txt, s);
+			String[] ss = deadline.mName.split(Pattern.quote("^"));
+			// String s = ss.;
+			// views.setViewVisibility(R.id.txt, View.VISIBLE);
+			// views.setViewVisibility(R.id.txt0, View.GONE);
+			// views.setViewVisibility(R.id.txt1, View.GONE);
+			views.setTextViewText(R.id.txt0, ss[0].trim());
+			views.setTextViewText(R.id.txt1, ss[1].trim());
 		}
+
 		Intent voiceIntent = new Intent(MainService.VOICE);
 		PendingIntent voicePendingIntent = PendingIntent.getBroadcast(this, 0, voiceIntent, 0);
 		views.setOnClickPendingIntent(R.id.voiceButton, voicePendingIntent);
@@ -168,6 +248,29 @@ public class MainService extends Service {
 		views.setOnClickPendingIntent(R.id.link, mainMenuPendingIntent);
 
 		appWidgetManager.updateAppWidget(appWidgetIds, views);
+	}
+
+	private synchronized Deadline getCurrentDeadline() {
+		if (mAllDeadline == null) {
+			mAllDeadline = MadokaCountdown.getAllDeadline(getResources());
+		}
+		TreeMap<String, Deadline> mActiveDeadline = new TreeMap<String, Deadline>();
+		long now = System.currentTimeMillis();
+		for (Deadline d : mAllDeadline) {
+			if (d.mTimeEnd < now)
+				continue;
+			String cat = d.mCatalogy;
+			Deadline dd = mActiveDeadline.get(cat);
+			if ((dd == null) || (d.mTimeEnd < dd.mTimeEnd)) {
+				mActiveDeadline.put(cat, d);
+			}
+		}
+		Deadline[] dv = mActiveDeadline.values().toArray(new Deadline[0]);
+		if (dv.length == 0) {
+			return null;
+		}
+		int dvi = (int) (now / 5000) % dv.length;
+		return dv[dvi];
 	}
 
 	// /////////////////////////////////
@@ -205,11 +308,11 @@ public class MainService extends Service {
 		int voiceId = voiceIdV[random.nextInt(voiceIdV.length)];
 
 		mMediaPlayer = MediaPlayer.create(this, voiceId);
-		if(mMediaPlayer!=null){
+		if (mMediaPlayer != null) {
 			// rare case... report say it happens, better handle it.
 			mMediaPlayer.setOnCompletionListener(mMediaPlayerListener);
 			mMediaPlayer.setOnErrorListener(mMediaPlayerListener);
-	
+
 			mMediaPlayer.setVolume(1.0f, 1.0f);
 			mMediaPlayer.start();
 		}
