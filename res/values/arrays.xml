@@ -14,10 +14,12 @@
 <resources>
 
 	<string-array name="deadline_name">
-		<item>PSP</item>
+		<item>EP01</item>
+   		<item>PSP</item>
 	</string-array>
 
 	<string-array name="deadline_time">
+	    <item>2012-02-10 20:00:00.000-0800</item>
 		<item>2012-03-15 00:00:00.000+0900</item>
 	</string-array>
 	
