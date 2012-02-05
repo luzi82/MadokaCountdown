@@ -87,13 +87,14 @@ public class MainService extends Service {
 
 	synchronized void startTimer() {
 		MadokaCountdown.logd("MainService.startTimer");
-		startAlarm(this);
+		startAlarm();
 		if (t == null) {
 			t = new Timer();
 
 			TimerTask tt = new TimerTask() {
 				@Override
 				public void run() {
+					Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 					long time = scheduledExecutionTime();
 					redraw(time);
 					updateTimer(time);
@@ -110,7 +111,7 @@ public class MainService extends Service {
 
 	synchronized void stopTimer() {
 		MadokaCountdown.logd("MainService.stopTimer");
-		endAlarm(this);
+		endAlarm();
 		if (t != null) {
 			t.cancel();
 			t = null;
@@ -179,22 +180,28 @@ public class MainService extends Service {
 		return mBinder;
 	}
 
-	public static void startAlarm(Context context) {
+	private boolean mAlarmEnabled=false;
+
+	public void startAlarm() {
 		MadokaCountdown.logd("MainService.startAlarm");
-		endAlarm(context);
-		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		alarmManager.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, getAlarmPendingIntent(context));
+		if (!mAlarmEnabled) {
+			endAlarm();
+			AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+			alarmManager.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, getAlarmPendingIntent());
+			mAlarmEnabled=true;
+		}
 	}
 
-	public static void endAlarm(Context context) {
+	public void endAlarm() {
 		MadokaCountdown.logd("MainService.endAlarm");
-		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		alarmManager.cancel(getAlarmPendingIntent(context));
+		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		alarmManager.cancel(getAlarmPendingIntent());
+		mAlarmEnabled=false;
 	}
 
-	private static PendingIntent getAlarmPendingIntent(Context context) {
-		Intent intent = new Intent(context, MainService.class);
-		return PendingIntent.getService(context, 0, intent, 0);
+	private PendingIntent getAlarmPendingIntent() {
+		Intent intent = new Intent(this, MainService.class);
+		return PendingIntent.getService(this, 0, intent, 0);
 	}
 
 	// //////////////////////////////////////
