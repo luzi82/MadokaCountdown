@@ -1,7 +1,9 @@
 package com.luzi82.madokacountdown;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Timer;
@@ -29,6 +31,7 @@ public class MainService extends Service {
 
 	public static String SETTING_CHANGE = "MadokaCountdown.SETTING_CHANGE";
 	public static String SETTINGCHANGE_CHAR = "MadokaCountdown.SETTINGCHANGE_CHAR";
+	public static String SETTINGCHANGE_COUNTDOWN = "MadokaCountdown.SETTINGCHANGE_COUNTDOWN";
 	public static String UPDATE = "MadokaCountdown.UPDATE";
 	public static String VOICE = "MadokaCountdown.VOICE";
 
@@ -51,6 +54,8 @@ public class MainService extends Service {
 					mScreenOn = true;
 				} else if (action.equals(VOICE)) {
 					triggerVoice();
+				} else if (action.equals(SETTINGCHANGE_COUNTDOWN)) {
+					updateCountdownEnabled(intent.getStringArrayExtra(MadokaCountdown.AVAILABLE_COUNTDOWN));
 				} else if (action.equals(SETTINGCHANGE_CHAR)) {
 					changeIconOnly(intent.getIntArrayExtra(MadokaCountdown.AVAILABLE_CHAR));
 				}
@@ -150,6 +155,7 @@ public class MainService extends Service {
 		// commandFilter.addAction(SETTING_CHANGE);
 		commandFilter.addAction(VOICE);
 		commandFilter.addAction(SETTINGCHANGE_CHAR);
+		commandFilter.addAction(SETTINGCHANGE_COUNTDOWN);
 		commandFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		commandFilter.addAction(Intent.ACTION_SCREEN_ON);
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
@@ -198,7 +204,10 @@ public class MainService extends Service {
 		RemoteViews views = new RemoteViews(getPackageName(), R.layout.appwidget);
 		views.setImageViewResource(R.id.voiceButton, mIconImgId);
 		Deadline deadline = getCurrentDeadline();
-		if (deadline.mType == Deadline.Type.COUNTDOWN) {
+		if (deadline == null) {
+			views.setTextViewText(R.id.txt0, " ");
+			views.setTextViewText(R.id.txt1, " ");
+		} else if (deadline.mType == Deadline.Type.COUNTDOWN) {
 			long diff = deadline.mTimeEnd - now;
 			// diff /= 24 * 60 * 60 * 1000;
 			// ++diff;
@@ -254,12 +263,20 @@ public class MainService extends Service {
 		if (mAllDeadline == null) {
 			mAllDeadline = MadokaCountdown.getAllDeadline(getResources());
 		}
+
+		if (mCountdownEnabled == null) {
+			updateCountdownEnabled(null);
+		}
+
 		TreeMap<String, Deadline> mActiveDeadline = new TreeMap<String, Deadline>();
 		long now = System.currentTimeMillis();
 		for (Deadline d : mAllDeadline) {
 			if (d.mTimeEnd < now)
 				continue;
 			String cat = d.mCatalogy;
+			if (!mCountdownEnabled.contains(cat)) {
+				continue;
+			}
 			Deadline dd = mActiveDeadline.get(cat);
 			if ((dd == null) || (d.mTimeEnd < dd.mTimeEnd)) {
 				mActiveDeadline.put(cat, d);
@@ -356,6 +373,24 @@ public class MainService extends Service {
 		}
 		int charNum = available[random.nextInt(available.length)];
 		mIconImgId = MadokaCountdown.ICON_ID[charNum];
+	}
+
+	// ///
+
+	// preference cache
+	HashSet<String> mCountdownEnabled;
+
+	synchronized void updateCountdownEnabled(String[] aKey) {
+		if (aKey == null) {
+			mCountdownEnabled = new HashSet<String>();
+			SharedPreferences sharedPreferences = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
+			for (int i = 0; i < MadokaCountdown.PREF_COUNTDOWN_ID.length; ++i) {
+				if (sharedPreferences.getBoolean("cd_" + MadokaCountdown.PREF_COUNTDOWN_ID[i], true))
+					mCountdownEnabled.add(MadokaCountdown.PREF_COUNTDOWN_ID[i]);
+			}
+		} else {
+			mCountdownEnabled = new HashSet<String>(Arrays.asList(aKey));
+		}
 	}
 
 	// ///

@@ -30,7 +30,10 @@ public class MadokaCountdown {
 
 	public static final String[] PREF_ID = { "char_madoka", "char_homura", "char_mami", "char_sayaka", "char_qb" };
 
+	public static final String[] PREF_COUNTDOWN_ID = { "nico_en", "BD_usa", "PSP" };
+
 	public static final String AVAILABLE_CHAR = "available_char";
+	public static final String AVAILABLE_COUNTDOWN = "available_countdown";
 
 	static void logd(String msg) {
 		if (!DEBUG) {
@@ -45,6 +48,12 @@ public class MadokaCountdown {
 		for (String c : MadokaCountdown.PREF_ID) {
 			if (!sp.contains(c)) {
 				editor.putBoolean(c, true);
+			}
+		}
+		for (String c : PREF_COUNTDOWN_ID) {
+			String cc = "cd_" + c;
+			if (!sp.contains(cc)) {
+				editor.putBoolean(cc, true);
 			}
 		}
 		editor.commit();
