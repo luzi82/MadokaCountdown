@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -29,7 +30,10 @@ public class MadokaCountdown {
 
 	public static final String[] PREF_ID = { "char_madoka", "char_homura", "char_mami", "char_sayaka", "char_qb" };
 
+	public static final String[] PREF_COUNTDOWN_ID = { "nico_en", "BD_usa", "PSP" };
+
 	public static final String AVAILABLE_CHAR = "available_char";
+	public static final String AVAILABLE_COUNTDOWN = "available_countdown";
 
 	static void logd(String msg) {
 		if (!DEBUG) {
@@ -46,37 +50,53 @@ public class MadokaCountdown {
 				editor.putBoolean(c, true);
 			}
 		}
+		for (String c : PREF_COUNTDOWN_ID) {
+			String cc = "cd_" + c;
+			if (!sp.contains(cc)) {
+				editor.putBoolean(cc, true);
+			}
+		}
 		editor.commit();
 	}
 
 	static private final SimpleDateFormat mDeadlineFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 
-	static public Deadline getCurrentDeadline(Resources res) {
-		long now = System.currentTimeMillis();
-		Deadline[] deadlines = getDeadlineArray(res);
-		for (int i = 0; i < deadlines.length; ++i) {
-			long time = deadlines[i].time;
-			time += 7 * 24 * 60 * 60 * 1000;
-			if (time > now) {
-				return deadlines[i];
-			}
-		}
-		return deadlines[deadlines.length - 1];
-	}
+	// static public Deadline getCurrentDeadline(Resources res) {
+	// long now = System.currentTimeMillis();
+	// Deadline[] deadlines = getDeadlineArray(res);
+	// for (int i = 0; i < deadlines.length; ++i) {
+	// long time = deadlines[i].mTimeEnd;
+	// time += 7 * 24 * 60 * 60 * 1000;
+	// if (time > now) {
+	// return deadlines[i];
+	// }
+	// }
+	// return deadlines[deadlines.length - 1];
+	// }
 
-	static public Deadline[] getDeadlineArray(Resources res) {
-		String[] deadline_name = res.getStringArray(R.array.deadline_name);
-		String[] deadline_time = res.getStringArray(R.array.deadline_time);
-		Deadline[] ret = new Deadline[deadline_time.length];
-		for (int i = 0; i < deadline_time.length; ++i) {
+	static public Deadline[] getAllDeadline(Resources res) {
+		// String[] deadline_name = res.getStringArray(R.array.deadline_name);
+		String[] deadline_line = res.getStringArray(R.array.deadline);
+
+		Deadline[] ret = new Deadline[deadline_line.length];
+		for (int i = 0; i < deadline_line.length; ++i) {
 			ret[i] = new Deadline();
-			ret[i].name = deadline_name[i];
+			String[] line = deadline_line[i].split(Pattern.quote("|"));
+			for (int j = 0; j < line.length; ++j) {
+				line[j] = line[j].trim();
+			}
+			int k = 0;
+			ret[i].mCatalogy = line[k++];
+			// ret[i].mType=Deadline.Type.valueOf(line[k++]);
+			ret[i].mName = line[k++];
 			try {
-				ret[i].time = mDeadlineFormat.parse(deadline_time[i]).getTime();
+				ret[i].mTimeEnd = mDeadlineFormat.parse(line[k++]).getTime();
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
+			ret[i].mType = ret[i].mName.contains("^") ? Deadline.Type.PERIOD : Deadline.Type.COUNTDOWN;
 		}
+
 		return ret;
 	}
 

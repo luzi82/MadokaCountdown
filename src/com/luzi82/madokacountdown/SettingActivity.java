@@ -30,6 +30,7 @@ public class SettingActivity extends PreferenceActivity {
 		sp.registerOnSharedPreferenceChangeListener(changeListener);
 
 		updateCharSelectionEnable(sp);
+		updateCountdownEnable(sp);
 	}
 
 	@Override
@@ -64,6 +65,30 @@ public class SettingActivity extends PreferenceActivity {
 		}
 	}
 
+	public void updateCountdownEnable(SharedPreferences sp) {
+		int charSum = 0;
+		for (String c : MadokaCountdown.PREF_COUNTDOWN_ID) {
+			String cc = "cd_" + c;
+			boolean v = sp.getBoolean(cc, true);
+			if (v)
+				++charSum;
+		}
+		if (charSum == 1) {
+			for (String c : MadokaCountdown.PREF_COUNTDOWN_ID) {
+				String cc = "cd_" + c;
+				boolean v = sp.getBoolean(cc, true);
+				CheckBoxPreference cbp = (CheckBoxPreference) findPreference(cc);
+				cbp.setEnabled(!v);
+			}
+		} else {
+			for (String c : MadokaCountdown.PREF_COUNTDOWN_ID) {
+				String cc = "cd_" + c;
+				CheckBoxPreference cbp = (CheckBoxPreference) findPreference(cc);
+				cbp.setEnabled(true);
+			}
+		}
+	}
+
 	//
 
 	SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
@@ -79,20 +104,41 @@ public class SettingActivity extends PreferenceActivity {
 			}
 			if (charChange) {
 				updateCharSelectionEnable(sharedPreferences);
+				LinkedList<Integer> lli = new LinkedList<Integer>();
+				for (int i = 0; i < MadokaCountdown.PREF_ID.length; ++i) {
+					if (sharedPreferences.getBoolean(MadokaCountdown.PREF_ID[i], true))
+						lli.add(i);
+				}
+				int[] lliv = new int[lli.size()];
+				for (int i = 0; i < lliv.length; ++i) {
+					lliv[i] = lli.get(i);
+				}
+				Intent updateIntent = new Intent(MainService.SETTINGCHANGE_CHAR);
+				updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+				updateIntent.putExtra(MadokaCountdown.AVAILABLE_CHAR, lliv);
+				sendBroadcast(updateIntent);
+				return;
 			}
-			LinkedList<Integer> lli = new LinkedList<Integer>();
-			for (int i = 0; i < MadokaCountdown.PREF_ID.length; ++i) {
-				if (sharedPreferences.getBoolean(MadokaCountdown.PREF_ID[i], true))
-					lli.add(i);
+			boolean countdownChange = false;
+			for (String c : MadokaCountdown.PREF_COUNTDOWN_ID) {
+				if (key.equals("cd_" + c)) {
+					countdownChange = true;
+					break;
+				}
 			}
-			int[] lliv = new int[lli.size()];
-			for (int i = 0; i < lliv.length; ++i) {
-				lliv[i] = lli.get(i);
+			if (countdownChange) {
+				updateCountdownEnable(sharedPreferences);
+				LinkedList<String> lls = new LinkedList<String>();
+				for (int i = 0; i < MadokaCountdown.PREF_COUNTDOWN_ID.length; ++i) {
+					if (sharedPreferences.getBoolean("cd_" + MadokaCountdown.PREF_COUNTDOWN_ID[i], true))
+						lls.add(MadokaCountdown.PREF_COUNTDOWN_ID[i]);
+				}
+				Intent updateIntent = new Intent(MainService.SETTINGCHANGE_COUNTDOWN);
+				updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+				updateIntent.putExtra(MadokaCountdown.AVAILABLE_COUNTDOWN, lls.toArray(new String[0]));
+				sendBroadcast(updateIntent);
+				return;
 			}
-			Intent updateIntent = new Intent(MainService.SETTINGCHANGE_CHAR);
-			updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-			updateIntent.putExtra(MadokaCountdown.AVAILABLE_CHAR, lliv);
-			sendBroadcast(updateIntent);
 		}
 	};
 
