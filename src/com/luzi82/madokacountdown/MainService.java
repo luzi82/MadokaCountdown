@@ -86,6 +86,7 @@ public class MainService extends Service {
 	}
 
 	synchronized void startTimer() {
+		MadokaCountdown.logd("MainService.startTimer");
 		startAlarm(this);
 		if (t == null) {
 			t = new Timer();
@@ -108,6 +109,7 @@ public class MainService extends Service {
 	}
 
 	synchronized void stopTimer() {
+		MadokaCountdown.logd("MainService.stopTimer");
 		endAlarm(this);
 		if (t != null) {
 			t.cancel();
@@ -116,7 +118,7 @@ public class MainService extends Service {
 	}
 
 	synchronized void redraw(long time) {
-		// MadokaCountdown.logd("MainService.run");
+		MadokaCountdown.logd("MainService.redraw");
 		AppWidgetManager awm = AppWidgetManager.getInstance(MainService.this);
 		int[] ids = awm.getAppWidgetIds(new ComponentName(MainService.this, CountdownAppWidgetProvider.class));
 		if ((ids != null) && (ids.length > 0)) {
@@ -178,12 +180,14 @@ public class MainService extends Service {
 	}
 
 	public static void startAlarm(Context context) {
+		MadokaCountdown.logd("MainService.startAlarm");
 		endAlarm(context);
 		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 		alarmManager.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, getAlarmPendingIntent(context));
 	}
 
 	public static void endAlarm(Context context) {
+		MadokaCountdown.logd("MainService.endAlarm");
 		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 		alarmManager.cancel(getAlarmPendingIntent(context));
 	}
@@ -200,7 +204,7 @@ public class MainService extends Service {
 	Deadline[] mAllDeadline = null;
 
 	private synchronized void doUpdate(AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
-		// MadokaCountdown.logd("doUpdate " + mBoardcastStart);
+		MadokaCountdown.logd("MainService.doUpdate");
 		RemoteViews views = new RemoteViews(getPackageName(), R.layout.appwidget);
 		views.setImageViewResource(R.id.voiceButton, mIconImgId);
 		Deadline deadline = getCurrentDeadline();
