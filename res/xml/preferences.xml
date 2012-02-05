@@ -1,27 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-	<PreferenceScreen
-		android:title="@string/preference_charselection">
-		<CheckBoxPreference android:key="char_madoka" android:title="鹿目 まどか" />
-		<CheckBoxPreference android:key="char_homura" android:title="暁美 ほむら" />
-		<CheckBoxPreference android:key="char_mami" android:title="巴 マミ" />
-		<CheckBoxPreference android:key="char_sayaka" android:title="美樹 さやか" />
-		<CheckBoxPreference android:key="char_qb" android:title="キュゥべえ" />
-	</PreferenceScreen>
+    <PreferenceScreen android:title="@string/preference_charselection" >
 
-   	<PreferenceScreen
-		android:title="@string/preference_countdownselection">
-		<CheckBoxPreference android:key="cd_nico_en" android:title="niconico English" />
-		<CheckBoxPreference android:key="cd_BD_usa" android:title="BD/DVD USA" />
-		<CheckBoxPreference android:key="cd_PSP" android:title="ポータブル" />
-	</PreferenceScreen>
-	    	
-	<Preference android:key="charity_link"
-		android:title="Support Japan"
-		android:summary="Donate via Google">
-		<intent android:action="android.intent.action.VIEW"
-			android:data="http://www.google.com/crisisresponse/japanquake2011.html" />
-	</Preference>
+        <CheckBoxPreference
+            android:key="char_madoka"
+            android:title="鹿目 まどか" />
+
+        <CheckBoxPreference
+            android:key="char_homura"
+            android:title="暁美 ほむら" />
+
+        <CheckBoxPreference
+            android:key="char_mami"
+            android:title="巴 マミ" />
+
+        <CheckBoxPreference
+            android:key="char_sayaka"
+            android:title="美樹 さやか" />
+
+        <CheckBoxPreference
+            android:key="char_qb"
+            android:title="キュゥべえ" />
+
+        <Preference android:title="Where is 佐倉杏子?" >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="http://madokacountdown.blogspot.com/2012/02/where-is.html" />
+        </Preference>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/preference_countdownselection" >
+
+        <CheckBoxPreference
+            android:key="cd_nico_en"
+            android:title="niconico English" />
+
+        <CheckBoxPreference
+            android:key="cd_BD_usa"
+            android:title="BD/DVD USA" />
+
+        <CheckBoxPreference
+            android:key="cd_PSP"
+            android:title="ポータブル" />
+
+        <Preference android:title="I want more countdown!" >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="http://madokacountdown.blogspot.com/2012/02/i-want-more-countdown.html" />
+        </Preference>
+    </PreferenceScreen>
+
+    <Preference
+        android:key="charity_link"
+        android:summary="Donate via Google"
+        android:title="Support Japan" >
+
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="http://www.google.com/crisisresponse/japanquake2011.html" />
+    </Preference>
+
+    <Preference
+        android:summary="http://madokacountdown.blogspot.com/"
+        android:title="Development blog" >
+
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="http://madokacountdown.blogspot.com/" />
+    </Preference>
 
 </PreferenceScreen>
