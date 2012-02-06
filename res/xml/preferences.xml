@@ -55,7 +55,8 @@
 
     <CheckBoxPreference
         android:key="seconds_timer"
-        android:title="Enable seconds timer" />
+        android:title="Show seconds timer"
+        android:summary="Consume more battery" />
 
     <Preference
         android:key="charity_link"

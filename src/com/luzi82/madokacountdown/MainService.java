@@ -131,10 +131,14 @@ public class MainService extends Service {
 			}
 			case MINUTE: {
 				GregorianCalendar gc = new GregorianCalendar();
-				gc.set(GregorianCalendar.MINUTE, gc.get(GregorianCalendar.MINUTE) + 1);
-				gc.set(GregorianCalendar.SECOND, 0);
+				int s = gc.get(GregorianCalendar.SECOND);
+				s /= 10;
+				s += 1;
+				s *= 10;
+				gc.set(GregorianCalendar.MINUTE, gc.get(GregorianCalendar.MINUTE) + s / 60);
+				gc.set(GregorianCalendar.SECOND, s % 60);
 				gc.set(GregorianCalendar.MILLISECOND, 10);
-				t.scheduleAtFixedRate(tt, gc.getTime(), 60000);
+				t.scheduleAtFixedRate(tt, gc.getTime(), 10000);
 				break;
 			}
 			}
@@ -346,7 +350,7 @@ public class MainService extends Service {
 		if (dv.length == 0) {
 			return null;
 		}
-		int dvi = (int) (now / (getSecondsTimer() ? 5000 : 60000)) % dv.length;
+		int dvi = (int) (now / 10000) % dv.length;
 		return dv[dvi];
 	}
 
