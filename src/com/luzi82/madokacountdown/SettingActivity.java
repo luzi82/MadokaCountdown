@@ -39,9 +39,9 @@ public class SettingActivity extends PreferenceActivity {
 		SharedPreferences sp = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
 		sp.unregisterOnSharedPreferenceChangeListener(changeListener);
 
-		if (!isFinishing()) {
-			finish();
-		}
+//		if (!isFinishing()) {
+//			finish();
+//		}
 	}
 
 	public void updateCharSelectionEnable(SharedPreferences sp) {
