@@ -13,6 +13,8 @@ public class CountdownAppWidgetProvider extends AppWidgetProvider {
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		super.onUpdate(context, appWidgetManager, appWidgetIds);
+		
+		MadokaCountdown.logd("CountdownAppWidgetProvider.onUpdate");
 
 		Intent i = new Intent(context, MainService.class);
 		context.startService(i);

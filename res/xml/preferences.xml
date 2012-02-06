@@ -53,6 +53,11 @@
         </Preference>
     </PreferenceScreen>
 
+    <CheckBoxPreference
+        android:key="seconds_timer"
+        android:title="Show seconds timer"
+        android:summary="Consume more battery" />
+
     <Preference
         android:key="charity_link"
         android:summary="Donate via Google"

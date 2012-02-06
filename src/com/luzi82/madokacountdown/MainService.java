@@ -32,6 +32,7 @@ public class MainService extends Service {
 	public static String SETTING_CHANGE = "MadokaCountdown.SETTING_CHANGE";
 	public static String SETTINGCHANGE_CHAR = "MadokaCountdown.SETTINGCHANGE_CHAR";
 	public static String SETTINGCHANGE_COUNTDOWN = "MadokaCountdown.SETTINGCHANGE_COUNTDOWN";
+	public static String SETTINGCHANGE_SECONDSTIMER = "MadokaCountdown.SETTINGCHANGE_SECONDSTIMER";
 	public static String UPDATE = "MadokaCountdown.UPDATE";
 	public static String VOICE = "MadokaCountdown.VOICE";
 
@@ -48,7 +49,8 @@ public class MainService extends Service {
 			MadokaCountdown.logd("action " + action);
 
 			synchronized (MainService.this) {
-				if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+				if (action.equals(UPDATE)) {
+				} else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
 					mScreenOn = false;
 				} else if (action.equals(Intent.ACTION_SCREEN_ON)) {
 					mScreenOn = true;
@@ -58,14 +60,26 @@ public class MainService extends Service {
 					updateCountdownEnabled(intent.getStringArrayExtra(MadokaCountdown.AVAILABLE_COUNTDOWN));
 				} else if (action.equals(SETTINGCHANGE_CHAR)) {
 					changeIconOnly(intent.getIntArrayExtra(MadokaCountdown.AVAILABLE_CHAR));
+				} else if (action.equals(SETTINGCHANGE_SECONDSTIMER)) {
+					updateSecondsTimer();
+					// redraw(System.currentTimeMillis());
+					// stopTimer();
 				}
-				// redraw(System.currentTimeMillis());
 				// startTimer();
 				updateTimer(System.currentTimeMillis());
+				if(t!=null){
+					redraw(System.currentTimeMillis());
+				}
 			}
 		}
 
 	};
+
+	enum TimerPeriod {
+		SECOND, MINUTE
+	}
+
+	TimerPeriod mTimerPeriod = null;
 
 	synchronized void updateTimer(long now) {
 		switch (mScreenDetect.getScreenState()) {
@@ -86,37 +100,66 @@ public class MainService extends Service {
 	}
 
 	synchronized void startTimer() {
-		startAlarm(this);
+		MadokaCountdown.logd("MainService.startTimer");
+		startAlarm();
+		TimerPeriod timerPeriod = getSecondsTimer() ? TimerPeriod.SECOND : TimerPeriod.MINUTE;
+		if (mTimerPeriod != timerPeriod) {
+			if (t != null) {
+				t.cancel();
+				t = null;
+			}
+			mTimerPeriod = null;
+		}
 		if (t == null) {
 			t = new Timer();
 
 			TimerTask tt = new TimerTask() {
 				@Override
 				public void run() {
+					Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 					long time = scheduledExecutionTime();
 					redraw(time);
 					updateTimer(time);
 				}
 			};
 
-			GregorianCalendar gc = new GregorianCalendar();
-			gc.set(GregorianCalendar.SECOND, gc.get(GregorianCalendar.SECOND) + 1);
-			gc.set(GregorianCalendar.MILLISECOND, 0);
-
-			t.scheduleAtFixedRate(tt, gc.getTime(), 1000);
+			switch (timerPeriod) {
+			case SECOND: {
+				GregorianCalendar gc = new GregorianCalendar();
+				gc.set(GregorianCalendar.SECOND, gc.get(GregorianCalendar.SECOND) + 1);
+				gc.set(GregorianCalendar.MILLISECOND, 10);
+				t.scheduleAtFixedRate(tt, gc.getTime(), 1000);
+				break;
+			}
+			case MINUTE: {
+				GregorianCalendar gc = new GregorianCalendar();
+				int s = gc.get(GregorianCalendar.SECOND);
+				s /= 10;
+				s += 1;
+				s *= 10;
+				gc.set(GregorianCalendar.MINUTE, gc.get(GregorianCalendar.MINUTE) + s / 60);
+				gc.set(GregorianCalendar.SECOND, s % 60);
+				gc.set(GregorianCalendar.MILLISECOND, 10);
+				t.scheduleAtFixedRate(tt, gc.getTime(), 10000);
+				break;
+			}
+			}
 		}
+		mTimerPeriod = timerPeriod;
 	}
 
 	synchronized void stopTimer() {
-		endAlarm(this);
+		MadokaCountdown.logd("MainService.stopTimer");
+		endAlarm();
 		if (t != null) {
 			t.cancel();
 			t = null;
 		}
+		mTimerPeriod = null;
 	}
 
 	synchronized void redraw(long time) {
-		// MadokaCountdown.logd("MainService.run");
+		MadokaCountdown.logd("MainService.redraw");
 		AppWidgetManager awm = AppWidgetManager.getInstance(MainService.this);
 		int[] ids = awm.getAppWidgetIds(new ComponentName(MainService.this, CountdownAppWidgetProvider.class));
 		if ((ids != null) && (ids.length > 0)) {
@@ -146,6 +189,10 @@ public class MainService extends Service {
 		initIntentFilter();
 
 		changeIconOnly(null);
+		updateCountdownEnabled(null);
+		updateSecondsTimer();
+
+		redraw(System.currentTimeMillis());
 		updateTimer(System.currentTimeMillis());
 	}
 
@@ -156,6 +203,7 @@ public class MainService extends Service {
 		commandFilter.addAction(VOICE);
 		commandFilter.addAction(SETTINGCHANGE_CHAR);
 		commandFilter.addAction(SETTINGCHANGE_COUNTDOWN);
+		commandFilter.addAction(SETTINGCHANGE_SECONDSTIMER);
 		commandFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		commandFilter.addAction(Intent.ACTION_SCREEN_ON);
 		commandFilter.addCategory(Intent.CATEGORY_HOME);
@@ -177,20 +225,28 @@ public class MainService extends Service {
 		return mBinder;
 	}
 
-	public static void startAlarm(Context context) {
-		endAlarm(context);
-		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		alarmManager.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, getAlarmPendingIntent(context));
+	private boolean mAlarmEnabled = false;
+
+	public void startAlarm() {
+		MadokaCountdown.logd("MainService.startAlarm");
+		if (!mAlarmEnabled) {
+			endAlarm();
+			AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+			alarmManager.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, getAlarmPendingIntent());
+			mAlarmEnabled = true;
+		}
 	}
 
-	public static void endAlarm(Context context) {
-		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		alarmManager.cancel(getAlarmPendingIntent(context));
+	public void endAlarm() {
+		MadokaCountdown.logd("MainService.endAlarm");
+		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		alarmManager.cancel(getAlarmPendingIntent());
+		mAlarmEnabled = false;
 	}
 
-	private static PendingIntent getAlarmPendingIntent(Context context) {
-		Intent intent = new Intent(context, MainService.class);
-		return PendingIntent.getService(context, 0, intent, 0);
+	private PendingIntent getAlarmPendingIntent() {
+		Intent intent = new Intent(this, MainService.class);
+		return PendingIntent.getService(this, 0, intent, 0);
 	}
 
 	// //////////////////////////////////////
@@ -200,7 +256,7 @@ public class MainService extends Service {
 	Deadline[] mAllDeadline = null;
 
 	private synchronized void doUpdate(AppWidgetManager appWidgetManager, int[] appWidgetIds, long now) {
-		// MadokaCountdown.logd("doUpdate " + mBoardcastStart);
+		MadokaCountdown.logd("MainService.doUpdate");
 		RemoteViews views = new RemoteViews(getPackageName(), R.layout.appwidget);
 		views.setImageViewResource(R.id.voiceButton, mIconImgId);
 		Deadline deadline = getCurrentDeadline();
@@ -224,14 +280,24 @@ public class MainService extends Service {
 			// String s = deadline.mName+" ";
 			String s = null;
 
-			if (day > 0) {
-				s = String.format("%d日%02d:%02d:%02d", day, hr, min, sec);
-			} else if (hr > 0) {
-				s = String.format("%d:%02d:%02d", hr, min, sec);
-			} else if (min > 0) {
-				s = String.format("%d:%02d", min, sec);
+			if (getSecondsTimer()) {
+				if (day > 0) {
+					s = String.format("%d日%02d:%02d:%02d", day, hr, min, sec);
+				} else if (hr > 0) {
+					s = String.format("%d:%02d:%02d", hr, min, sec);
+				} else if (min > 0) {
+					s = String.format("%d:%02d", min, sec);
+				} else {
+					s = String.format("%d", sec);
+				}
 			} else {
-				s = String.format("%d", sec);
+				if (day > 0) {
+					s = String.format("%d日%02d:%02d", day, hr, min);
+				} else if (hr > 0) {
+					s = String.format("%d:%02d", hr, min);
+				} else {
+					s = String.format("%d", min);
+				}
 			}
 			// views.setViewVisibility(R.id.txt, View.GONE);
 			// views.setViewVisibility(R.id.txt0, View.VISIBLE);
@@ -286,7 +352,7 @@ public class MainService extends Service {
 		if (dv.length == 0) {
 			return null;
 		}
-		int dvi = (int) (now / 5000) % dv.length;
+		int dvi = (int) (now / 10000) % dv.length;
 		return dv[dvi];
 	}
 
@@ -391,6 +457,23 @@ public class MainService extends Service {
 		} else {
 			mCountdownEnabled = new HashSet<String>(Arrays.asList(aKey));
 		}
+	}
+
+	// //\
+
+	Boolean mSecondsTimer = null;
+
+	boolean getSecondsTimer() {
+		if (mSecondsTimer == null) {
+			updateSecondsTimer();
+		}
+		return mSecondsTimer;
+	}
+
+	synchronized void updateSecondsTimer() {
+		MadokaCountdown.logd("MainService.updateSecondsTimer");
+		SharedPreferences sharedPreferences = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
+		mSecondsTimer = sharedPreferences.getBoolean(MadokaCountdown.PREF_SECONDSTIMER, false);
 	}
 
 	// ///
