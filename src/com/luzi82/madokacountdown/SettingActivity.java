@@ -119,6 +119,7 @@ public class SettingActivity extends PreferenceActivity {
 				sendBroadcast(updateIntent);
 				return;
 			}
+			
 			boolean countdownChange = false;
 			for (String c : MadokaCountdown.PREF_COUNTDOWN_ID) {
 				if (key.equals("cd_" + c)) {
@@ -136,6 +137,14 @@ public class SettingActivity extends PreferenceActivity {
 				Intent updateIntent = new Intent(MainService.SETTINGCHANGE_COUNTDOWN);
 				updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
 				updateIntent.putExtra(MadokaCountdown.AVAILABLE_COUNTDOWN, lls.toArray(new String[0]));
+				sendBroadcast(updateIntent);
+				return;
+			}
+			
+			if(key.equals(MadokaCountdown.PREF_SECONDSTIMER)){
+				Intent updateIntent = new Intent(MainService.SETTINGCHANGE_SECONDSTIMER);
+				updateIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+				updateIntent.putExtra(MadokaCountdown.VALUE, sharedPreferences.getBoolean(MadokaCountdown.PREF_SECONDSTIMER,false));
 				sendBroadcast(updateIntent);
 				return;
 			}

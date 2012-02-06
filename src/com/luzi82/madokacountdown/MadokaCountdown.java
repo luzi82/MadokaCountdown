@@ -32,8 +32,11 @@ public class MadokaCountdown {
 
 	public static final String[] PREF_COUNTDOWN_ID = { "nico_en", "BD_usa", "PSP" };
 
+	public static final String PREF_SECONDSTIMER = "seconds_timer";
+
 	public static final String AVAILABLE_CHAR = "available_char";
 	public static final String AVAILABLE_COUNTDOWN = "available_countdown";
+	public static final String VALUE = "value";
 
 	static void logd(String msg) {
 		if (!DEBUG) {
@@ -55,6 +58,9 @@ public class MadokaCountdown {
 			if (!sp.contains(cc)) {
 				editor.putBoolean(cc, true);
 			}
+		}
+		if (!sp.contains(PREF_SECONDSTIMER)) {
+			editor.putBoolean(PREF_SECONDSTIMER, true);
 		}
 		editor.commit();
 	}
