@@ -65,9 +65,11 @@ public class MainService extends Service {
 					// redraw(System.currentTimeMillis());
 					// stopTimer();
 				}
-				redraw(System.currentTimeMillis());
 				// startTimer();
 				updateTimer(System.currentTimeMillis());
+				if(t!=null){
+					redraw(System.currentTimeMillis());
+				}
 			}
 		}
 
