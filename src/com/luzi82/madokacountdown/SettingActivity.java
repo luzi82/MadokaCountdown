@@ -36,12 +36,17 @@ public class SettingActivity extends PreferenceActivity {
 	@Override
 	protected void onPause() {
 		super.onPause();
+		
+		MadokaCountdown.logd("onPause");
+		
 		SharedPreferences sp = getSharedPreferences(MadokaCountdown.PREFERENCE_NAME, 0);
 		sp.unregisterOnSharedPreferenceChangeListener(changeListener);
 
-//		if (!isFinishing()) {
-//			finish();
-//		}
+		// in case when user press home key to back home, and click on timer again.
+		// MainMenuActivity should be shown
+		if (!isFinishing()) {
+			finish();
+		}
 	}
 
 	public void updateCharSelectionEnable(SharedPreferences sp) {
