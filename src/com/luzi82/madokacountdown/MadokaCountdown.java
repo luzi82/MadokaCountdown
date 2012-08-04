@@ -30,7 +30,7 @@ public class MadokaCountdown {
 
 	public static final String[] PREF_ID = { "char_madoka", "char_homura", "char_mami", "char_sayaka", "char_qb" };
 
-	public static final String[] PREF_COUNTDOWN_ID = { "nico_en", "BD_usa", "PSP" };
+	public static final String[] PREF_COUNTDOWN_ID = { "movie" };
 
 	public static final String PREF_SECONDSTIMER = "seconds_timer";
 

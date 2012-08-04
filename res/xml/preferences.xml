@@ -34,16 +34,8 @@
     <PreferenceScreen android:title="@string/preference_countdownselection" >
 
         <CheckBoxPreference
-            android:key="cd_nico_en"
-            android:title="niconico English" />
-
-        <CheckBoxPreference
-            android:key="cd_BD_usa"
-            android:title="BD/DVD USA" />
-
-        <CheckBoxPreference
-            android:key="cd_PSP"
-            android:title="ポータブル" />
+            android:key="cd_movie"
+            android:title="劇場版" />
 
         <Preference android:title="I want more countdown!" >
 

@@ -14,16 +14,10 @@
 <resources>
 
     <string-array name="deadline">
-        <item>nico_en	|niconico English EP01			|2012-02-10 20:00:00.000-0800</item>
-        <item>nico_en	|niconico English EP01^On AIR	|2100-01-01 00:00:00.000+0000</item>
-        <item>BD_usa	|BD/DVD USA Vol.1				|2012-02-14 00:00:00.000-0800</item>
-        <item>BD_usa	|BD/DVD USA Vol.1^On SALE		|2012-02-21 00:00:00.000-0800</item>
-        <item>BD_usa	|BD/DVD USA Vol.2				|2012-04-10 00:00:00.000-0800</item>
-        <item>BD_usa	|BD/DVD USA Vol.2^On SALE		|2012-04-17 00:00:00.000-0800</item>
-        <item>BD_usa	|BD/DVD USA Vol.3				|2012-06-12 00:00:00.000-0800</item>
-        <item>BD_usa	|BD/DVD USA Vol.3^On SALE		|2100-01-01 00:00:00.000+0000</item>
-        <item>PSP		|ポータブル						|2012-03-15 00:00:00.000+0900</item>
-        <item>PSP		|ポータブル^発売中					|2100-01-01 00:00:00.000+0000</item>
+        <item>movie	|[前編] 始まりの物語		|2012-10-06 00:00:00.000+0900</item>
+        <item>movie	|[前編] 始まりの物語^On AIR	|2012-10-08 00:00:00.000+0900</item>
+        <item>movie	|[後編] 永遠の物語			|2012-10-13 00:00:00.000+0900</item>
+        <item>movie	|[後編] 永遠の物語^On AIR	|2100-01-01 00:00:00.000+0000</item>
     </string-array>
 
 </resources>
