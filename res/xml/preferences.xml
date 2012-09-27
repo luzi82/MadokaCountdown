@@ -35,8 +35,14 @@
 
         <CheckBoxPreference
             android:key="cd_movie"
-            android:title="劇場版" />
-
+            android:title="劇場版（日本）" />
+        <CheckBoxPreference
+            android:key="cd_movie_us"
+            android:title="Movie(US)" />
+                <CheckBoxPreference
+            android:key="cd_movie_hk"
+            android:title="劇場版（香港）" />
+        
         <Preference android:title="I want more countdown!" >
 
             <intent
