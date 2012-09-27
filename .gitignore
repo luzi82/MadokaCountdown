@@ -6,3 +6,4 @@ bin/
 gen/
 MadokaCountdown.apk
 uninstall.sh
+/install.sh
