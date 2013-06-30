@@ -34,14 +34,16 @@
     <PreferenceScreen android:title="@string/preference_countdownselection" >
 
         <CheckBoxPreference
-            android:key="cd_movie"
+            android:key="cd_movie_3_jp"
             android:title="劇場版（日本）" />
+        <!-- 
         <CheckBoxPreference
             android:key="cd_movie_us"
             android:title="Movie(US)" />
-                <CheckBoxPreference
+        <CheckBoxPreference
             android:key="cd_movie_hk"
             android:title="劇場版（香港）" />
+        -->
         
         <Preference android:title="I want more countdown!" >
 

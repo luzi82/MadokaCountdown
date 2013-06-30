@@ -14,16 +14,8 @@
 <resources>
 
     <string-array name="deadline">
-        <item>movie		|[前編] 始まりの物語			|2012-10-06 00:00:00.000+0900</item>
-        <item>movie		|[前編] 始まりの物語^On AIR	|2012-10-08 00:00:00.000+0900</item>
-        <item>movie		|[後編] 永遠の物語				|2012-10-13 00:00:00.000+0900</item>
-        <item>movie		|[後編] 永遠の物語^On AIR		|2100-01-01 00:00:00.000+0000</item>
-        <item>movie_us	|Movie						|2012-10-19 18:00:00.000-0400</item>
-        <item>movie_us	|Movie^On AIR				|2100-01-01 00:00:00.000+0000</item>
-        <item>movie_hk	|[前編] 始まりの物語			|2012-10-20 10:00:00.000+0800</item>
-        <item>movie_hk	|[前編] 始まりの物語^On AIR	|2012-10-20 10:00:00.000+0800</item>
-        <item>movie_hk	|[後編] 永遠の物語				|2012-10-27 10:00:00.000+0800</item>
-        <item>movie_hk	|[後編] 永遠の物語^On AIR		|2100-01-01 00:00:00.000+0000</item>
-        </string-array>
+        <item>movie_3_jp	|[新編] 叛逆の物語			|2013-10-26 00:00:00.000+0900</item>
+        <item>movie_3_jp	|[新編] 叛逆の物語^On AIR	|2100-01-01 00:00:00.000+0000</item>
+    </string-array>
 
 </resources>
